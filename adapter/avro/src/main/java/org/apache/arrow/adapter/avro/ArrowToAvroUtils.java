@@ -63,8 +63,61 @@ import org.apache.arrow.vector.complex.MapVector;
 import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.complex.UnionVector;
 import org.apache.arrow.vector.types.Types;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.avro.SchemaBuilder;
+import org.apache.avro.reflect.AvroSchema;
 
 public class ArrowToAvroUtils {
+
+  public void createSchemaField(Field field) {
+
+    AvroSchema
+  }
+
+  private SchemaBuilder.FieldTypeBuilder<?> createSchemaField(Field field, SchemaBuilder.FieldTypeBuilder<?> builder, boolean nullable) {
+
+    if (nullable && field.getType().getTypeID() != ArrowType.ArrowTypeID.Union) {
+      SchemaBuilder.FieldTypeBuilder<?> innerField = createSchemaField(field, false);
+      return innerField.nullable();
+    }
+  }
+
+  private SchemaBuilder.FieldAssembler<?> createSchemaField(Field field, SchemaBuilder.BaseFieldTypeBuilder<?> builder, boolean nullable) {
+
+    final ArrowType.ArrowTypeID typeID = field.getType().getTypeID();
+
+    switch (typeID) {
+
+      case Null: return builder.nullType().noDefault();
+      case Bool: return builder.booleanType().noDefault();
+      case Int: return builder.intType().noDefault();
+      case FloatingPoint: return builder.floatType().noDefault();
+      case Utf8: return builder.stringType().noDefault();
+
+      case Decimal:
+        ArrowType.Decimal decimalType = (ArrowType.Decimal) field.getType();
+        return builder.fixed(field.getName())
+            .prop("logicalType", "decimal")
+            .prop("precision", decimalType.getPrecision())
+            .prop("scale", decimalType.getScale())
+            .size(decimalType.getBitWidth() / 8)
+            .noDefault();
+
+      case Date:
+        return builder.intBuilder()
+            .prop("logicalType", "date")
+            .endInt()
+            .noDefault();
+
+      case Time:
+        ArrowType.Time timeType = (ArrowType.Time) field.getType();
+        timeType.
+
+      case List: return builder.array().
+    }
+  }
+
 
   /**
    * Create a composite Avro producer for a set of field vectors (typically the root set of a VSR).
