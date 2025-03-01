@@ -14,26 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.arrow.adapter.avro.producers.logical;
 
 import java.io.IOException;
 import org.apache.arrow.adapter.avro.producers.BaseAvroProducer;
-import org.apache.arrow.vector.TimeMilliVector;
+import org.apache.arrow.vector.TimeNanoVector;
 import org.apache.avro.io.Encoder;
 
-/**
- * Producer that produces time (milliseconds) values from a {@link TimeMilliVector}, writes data to
- * an Avro encoder.
- */
-public class AvroTimeMillisProducer extends BaseAvroProducer<TimeMilliVector> {
+public class AvroTimeNanoProducer extends BaseAvroProducer<TimeNanoVector> {
 
-  /** Instantiate an AvroTimeMillisProducer. */
-  public AvroTimeMillisProducer(TimeMilliVector vector) {
+  private static final long NANOS_PER_MICRO = 1000;
+
+  public AvroTimeNanoProducer(TimeNanoVector vector) {
     super(vector);
   }
 
   @Override
   public void produce(Encoder encoder) throws IOException {
-    encoder.writeInt(vector.get(currentIndex++));
+    long nanos = vector.getDataBuffer().getLong(currentIndex * (long) TimeNanoVector.TYPE_WIDTH);
+    long micros = nanos / NANOS_PER_MICRO;
+    encoder.writeLong(micros);
   }
 }

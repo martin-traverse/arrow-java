@@ -16,19 +16,25 @@
  */
 package org.apache.arrow.adapter.avro.producers.logical;
 
-import org.apache.arrow.adapter.avro.producers.AvroLongProducer;
-import org.apache.arrow.vector.TimeMicroVector;
+import java.io.IOException;
+import org.apache.arrow.adapter.avro.producers.BaseAvroProducer;
+import org.apache.arrow.vector.TimeSecVector;
+import org.apache.avro.io.Encoder;
 
-/**
- * Producer that produces time (microseconds) values from a {@link TimeMicroVector}, writes data to
- * an Avro encoder.
- */
-public class AvroTimeMicroProducer extends AvroLongProducer {
+public class AvroTimeSecProducer extends BaseAvroProducer<TimeSecVector> {
 
-  // Time in microseconds stored as long, matches Avro time-micros type
+  // Convert seconds to milliseconds for Avro time-millis type
 
-  /** Instantiate an AvroTimeMicroProducer. */
-  public AvroTimeMicroProducer(TimeMicroVector vector) {
+  private static final long MICROS_PER_SECOND = 1000;
+
+  public AvroTimeSecProducer(TimeSecVector vector) {
     super(vector);
+  }
+
+  @Override
+  public void produce(Encoder encoder) throws IOException {
+    int seconds = vector.getDataBuffer().getInt(currentIndex * (long) TimeSecVector.TYPE_WIDTH);
+    long micros = seconds * MICROS_PER_SECOND;
+    encoder.writeLong(micros);
   }
 }

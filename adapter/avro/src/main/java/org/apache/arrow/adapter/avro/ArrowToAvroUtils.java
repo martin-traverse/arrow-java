@@ -40,11 +40,32 @@ import org.apache.arrow.adapter.avro.producers.logical.AvroDateMilliProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroDecimalProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroDecimal256Producer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroTimeMicroProducer;
-import org.apache.arrow.adapter.avro.producers.logical.AvroTimeMillisProducer;
+import org.apache.arrow.adapter.avro.producers.logical.AvroTimeMilliProducer;
+import org.apache.arrow.adapter.avro.producers.logical.AvroTimeNanoProducer;
+import org.apache.arrow.adapter.avro.producers.logical.AvroTimeSecProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroTimestampMicroProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroTimestampMillisProducer;
 import org.apache.arrow.util.Preconditions;
-import org.apache.arrow.vector.*;
+import org.apache.arrow.vector.BigIntVector;
+import org.apache.arrow.vector.BitVector;
+import org.apache.arrow.vector.DateDayVector;
+import org.apache.arrow.vector.DateMilliVector;
+import org.apache.arrow.vector.DecimalVector;
+import org.apache.arrow.vector.Decimal256Vector;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.FixedSizeBinaryVector;
+import org.apache.arrow.vector.Float4Vector;
+import org.apache.arrow.vector.Float8Vector;
+import org.apache.arrow.vector.IntVector;
+import org.apache.arrow.vector.NullVector;
+import org.apache.arrow.vector.TimeMicroVector;
+import org.apache.arrow.vector.TimeMilliVector;
+import org.apache.arrow.vector.TimeNanoVector;
+import org.apache.arrow.vector.TimeSecVector;
+import org.apache.arrow.vector.TimeStampMicroVector;
+import org.apache.arrow.vector.TimeStampMilliVector;
+import org.apache.arrow.vector.VarBinaryVector;
+import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.complex.ListVector;
 import org.apache.arrow.vector.complex.MapVector;
 import org.apache.arrow.vector.complex.StructVector;
@@ -588,10 +609,14 @@ public class ArrowToAvroUtils {
         return new AvroDateDayProducer((DateDayVector) vector);
       case DATEMILLI:
         return new AvroDateMilliProducer((DateMilliVector) vector);
+      case TIMESEC:
+        return new AvroTimeSecProducer((TimeSecVector) vector);
       case TIMEMILLI:
-        return new AvroTimeMillisProducer((TimeMilliVector) vector);
+        return new AvroTimeMilliProducer((TimeMilliVector) vector);
       case TIMEMICRO:
         return new AvroTimeMicroProducer((TimeMicroVector) vector);
+      case TIMENANO:
+        return new AvroTimeNanoProducer((TimeNanoVector) vector);
       case TIMESTAMPMILLI:
         return new AvroTimestampMillisProducer((TimeStampMilliVector) vector);
       case TIMESTAMPMICRO:
