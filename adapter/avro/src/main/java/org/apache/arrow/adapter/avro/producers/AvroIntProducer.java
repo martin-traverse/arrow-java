@@ -45,7 +45,7 @@ public class AvroIntProducer extends BaseAvroProducer<BaseFixedWidthVector> {
 
   @Override
   public void produce(Encoder encoder) throws IOException {
-    int value = vector.getDataBuffer().getInt(currentIndex * (long) IntVector.TYPE_WIDTH);
+    int value = vector.getDataBuffer().getInt((long) IntVector.TYPE_WIDTH * currentIndex++);
     encoder.writeInt(value);
   }
 }
