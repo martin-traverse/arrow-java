@@ -77,20 +77,20 @@ loadScripts(document, 'script');</script>
 <div class="block">Producer which produces array type values to an Avro encoder.</div>
 </div>
 <div class="col-first odd-row-color"><code>class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="../AvroBooleanProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroBooleanProducer</a></code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroBigIntProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroBigIntProducer</a></code></div>
 <div class="col-last odd-row-color">
-<div class="block">Producer that produces boolean values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/BitVector.html" title="class in org.apache.arrow.vector"><code>BitVector</code></a>, writes data to an Avro encoder.</div>
+<div class="block">Producer that produces long values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/BigIntVector.html" title="class in org.apache.arrow.vector"><code>BigIntVector</code></a>, writes data to an Avro encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../AvroBytesProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroBytesProducer</a></code></div>
+<div class="col-second even-row-color"><code><a href="../AvroBooleanProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroBooleanProducer</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Producer that produces byte array values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/VarBinaryVector.html" title="class in org.apache.arrow.vector"><code>VarBinaryVector</code></a>, writes data to an Avro
- encoder.</div>
+<div class="block">Producer that produces boolean values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/BitVector.html" title="class in org.apache.arrow.vector"><code>BitVector</code></a>, writes data to an Avro encoder.</div>
 </div>
 <div class="col-first odd-row-color"><code>class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="../AvroDoubleProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroDoubleProducer</a></code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroBytesProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroBytesProducer</a></code></div>
 <div class="col-last odd-row-color">
-<div class="block">Producer that produces double values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/Float8Vector.html" title="class in org.apache.arrow.vector"><code>Float8Vector</code></a>, writes data to an Avro encoder.</div>
+<div class="block">Producer that produces byte array values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/VarBinaryVector.html" title="class in org.apache.arrow.vector"><code>VarBinaryVector</code></a>, writes data to an Avro
+ encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="../AvroEnumProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroEnumProducer</a></code></div>
@@ -105,9 +105,19 @@ loadScripts(document, 'script');</script>
  to an Avro encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../AvroFloatProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroFloatProducer</a></code></div>
+<div class="col-second even-row-color"><code><a href="../AvroFloat2Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroFloat2Producer</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">Producer that produces float values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/Float2Vector.html" title="class in org.apache.arrow.vector"><code>Float2Vector</code></a>, writes data to an Avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroFloat4Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroFloat4Producer</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Producer that produces float values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/Float4Vector.html" title="class in org.apache.arrow.vector"><code>Float4Vector</code></a>, writes data to an Avro encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../AvroFloat8Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroFloat8Producer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that produces double values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/Float8Vector.html" title="class in org.apache.arrow.vector"><code>Float8Vector</code></a>, writes data to an Avro encoder.</div>
 </div>
 <div class="col-first odd-row-color"><code>class&nbsp;</code></div>
 <div class="col-second odd-row-color"><code><a href="../AvroIntProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroIntProducer</a></code></div>
@@ -115,24 +125,24 @@ loadScripts(document, 'script');</script>
 <div class="block">Producer that produces int values from an <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/IntVector.html" title="class in org.apache.arrow.vector"><code>IntVector</code></a>, writes data to an avro encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../AvroLongProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroLongProducer</a></code></div>
+<div class="col-second even-row-color"><code><a href="../AvroMapProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroMapProducer</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Producer that produces long values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/BigIntVector.html" title="class in org.apache.arrow.vector"><code>BigIntVector</code></a>, writes data to an Avro encoder.</div>
-</div>
-<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="../AvroMapProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroMapProducer</a></code></div>
-<div class="col-last odd-row-color">
 <div class="block">Producer which produces map type values to avro encoder.</div>
 </div>
-<div class="col-first even-row-color"><code>class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../AvroNullableProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroNullableProducer</a>&lt;T extends <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/FieldVector.html" title="interface in org.apache.arrow.vector">FieldVector</a>&gt;</code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroNullableProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroNullableProducer</a>&lt;T extends <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/FieldVector.html" title="interface in org.apache.arrow.vector">FieldVector</a>&gt;</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Producer wrapper which producers nullable types to an avro encoder.</div>
 </div>
-<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="../AvroNullProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroNullProducer</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../AvroNullProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroNullProducer</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Producer that produces null values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/NullVector.html" title="class in org.apache.arrow.vector"><code>NullVector</code></a>, writes data to an Avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroSmallIntProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroSmallIntProducer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that produces int values from an <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/SmallIntVector.html" title="class in org.apache.arrow.vector"><code>SmallIntVector</code></a>, writes data to an avro encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="../AvroStringProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroStringProducer</a></code></div>
@@ -146,8 +156,33 @@ loadScripts(document, 'script');</script>
 <div class="block">Producer which produces nested record type values to avro encoder.</div>
 </div>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../AvroUnionsProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUnionsProducer</a></code></div>
+<div class="col-second even-row-color"><code><a href="../AvroTinyIntProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroTinyIntProducer</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">Producer that produces int values from an <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TinyIntVector.html" title="class in org.apache.arrow.vector"><code>TinyIntVector</code></a>, writes data to an avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroUint1Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUint1Producer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that produces int values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/UInt1Vector.html" title="class in org.apache.arrow.vector"><code>UInt1Vector</code></a>, writes data to an avro encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../AvroUint2Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUint2Producer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that produces int values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/UInt2Vector.html" title="class in org.apache.arrow.vector"><code>UInt2Vector</code></a>, writes data to an avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroUint4Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUint4Producer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that produces long values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/UInt4Vector.html" title="class in org.apache.arrow.vector"><code>UInt4Vector</code></a>, writes data to an avro encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../AvroUint8Producer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUint8Producer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that produces long values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/UInt8Vector.html" title="class in org.apache.arrow.vector"><code>UInt8Vector</code></a>, writes data to an avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../AvroUnionsProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers">AvroUnionsProducer</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Producer which produces unions type values to avro encoder.</div>
 </div>
 </div>
@@ -211,14 +246,50 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code>class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="../logical/AvroTimestampMicroProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampMicroProducer</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Producer that produces timestamp (microseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMicroVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMicroVector</code></a>,
+<div class="block">Producer that produces local timestamp (microseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMicroVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMicroVector</code></a>,
  writes data to an Avro encoder.</div>
 </div>
 <div class="col-first odd-row-color"><code>class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="../logical/AvroTimestampMillisProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampMillisProducer</a></code></div>
+<div class="col-second odd-row-color"><code><a href="../logical/AvroTimestampMicroTzProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampMicroTzProducer</a></code></div>
 <div class="col-last odd-row-color">
-<div class="block">Producer that produces timestamp (milliseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMilliVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMilliVector</code></a>,
+<div class="block">Producer that converts timestamps in zone-aware epoch microseconds from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMicroTZVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMicroTZVector</code></a> and produces UTC timestamp (microseconds) values, writes data to an Avro
+ encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../logical/AvroTimestampMilliProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampMilliProducer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that produces local timestamp (milliseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMilliVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMilliVector</code></a>,
  writes data to an Avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../logical/AvroTimestampMilliTzProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampMilliTzProducer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that converts timestamps in zone-aware epoch milliseconds from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampMilliTZVector.html" title="class in org.apache.arrow.vector"><code>TimeStampMilliTZVector</code></a> and produces UTC timestamp (milliseconds) values, writes data to an Avro
+ encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../logical/AvroTimestampNanoProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampNanoProducer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that produces local timestamp (nanoseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampNanoVector.html" title="class in org.apache.arrow.vector"><code>TimeStampNanoVector</code></a>,
+ writes data to an Avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../logical/AvroTimestampNanoTzProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampNanoTzProducer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that converts timestamps in zone-aware epoch nanoseconds from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampNanoTZVector.html" title="class in org.apache.arrow.vector"><code>TimeStampNanoTZVector</code></a> and produces UTC timestamp (nanoseconds) values, writes data to an Avro
+ encoder.</div>
+</div>
+<div class="col-first even-row-color"><code>class&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../logical/AvroTimestampSecProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampSecProducer</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Producer that converts epoch seconds from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampSecVector.html" title="class in org.apache.arrow.vector"><code>TimeStampSecVector</code></a> and produces local time
+ (milliseconds) values, writes data to an Avro encoder.</div>
+</div>
+<div class="col-first odd-row-color"><code>class&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="../logical/AvroTimestampSecTzProducer.html" class="type-name-link" title="class in org.apache.arrow.adapter.avro.producers.logical">AvroTimestampSecTzProducer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Producer that converts timestamps in zone-aware epoch seconds from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeStampSecTZVector.html" title="class in org.apache.arrow.vector"><code>TimeStampSecTZVector</code></a>
+ and produces UTC timestamp (millisecond) values, writes data to an Avro encoder.</div>
 </div>
 </div>
 </section>

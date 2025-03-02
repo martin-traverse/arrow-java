@@ -263,32 +263,60 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">FixedSizeBinaryVector implements a fixed width vector of binary values which could be null.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/Float4Vector.html#org.apache.arrow.adapter.avro.producers">Float4Vector</a></div>
+<div class="col-first odd-row-color"><a href="class-use/Float2Vector.html#org.apache.arrow.adapter.avro.producers">Float2Vector</a></div>
 <div class="col-last odd-row-color">
+<div class="block">Float2Vector implements a fixed width (2 bytes) vector of short values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/Float4Vector.html#org.apache.arrow.adapter.avro.producers">Float4Vector</a></div>
+<div class="col-last even-row-color">
 <div class="block">Float4Vector implements a fixed width vector (4 bytes) of float values which could be null.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/Float8Vector.html#org.apache.arrow.adapter.avro.producers">Float8Vector</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/Float8Vector.html#org.apache.arrow.adapter.avro.producers">Float8Vector</a></div>
+<div class="col-last odd-row-color">
 <div class="block">Float8Vector implements a fixed width vector (8 bytes) of double values which could be null.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/IntVector.html#org.apache.arrow.adapter.avro.producers">IntVector</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/IntVector.html#org.apache.arrow.adapter.avro.producers">IntVector</a></div>
+<div class="col-last even-row-color">
 <div class="block">IntVector implements a fixed width (4 bytes) vector of integer values which could be null.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/NullVector.html#org.apache.arrow.adapter.avro.producers">NullVector</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/NullVector.html#org.apache.arrow.adapter.avro.producers">NullVector</a></div>
+<div class="col-last odd-row-color">
 <div class="block">A null type vector.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/VarBinaryVector.html#org.apache.arrow.adapter.avro.producers">VarBinaryVector</a></div>
+<div class="col-first even-row-color"><a href="class-use/SmallIntVector.html#org.apache.arrow.adapter.avro.producers">SmallIntVector</a></div>
+<div class="col-last even-row-color">
+<div class="block">SmallIntVector implements a fixed width (2 bytes) vector of short values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/TinyIntVector.html#org.apache.arrow.adapter.avro.producers">TinyIntVector</a></div>
 <div class="col-last odd-row-color">
+<div class="block">TinyIntVector implements a fixed width (1 bytes) vector of byte values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/UInt1Vector.html#org.apache.arrow.adapter.avro.producers">UInt1Vector</a></div>
+<div class="col-last even-row-color">
+<div class="block">UInt1Vector implements a fixed width (1 bytes) vector of integer values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/UInt2Vector.html#org.apache.arrow.adapter.avro.producers">UInt2Vector</a></div>
+<div class="col-last odd-row-color">
+<div class="block">UInt2Vector implements a fixed width (2 bytes) vector of integer values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/UInt4Vector.html#org.apache.arrow.adapter.avro.producers">UInt4Vector</a></div>
+<div class="col-last even-row-color">
+<div class="block">UInt4Vector implements a fixed width (4 bytes) vector of integer values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/UInt8Vector.html#org.apache.arrow.adapter.avro.producers">UInt8Vector</a></div>
+<div class="col-last odd-row-color">
+<div class="block">UInt8Vector implements a fixed width vector (8 bytes) of integer values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/VarBinaryVector.html#org.apache.arrow.adapter.avro.producers">VarBinaryVector</a></div>
+<div class="col-last even-row-color">
 <div class="block">VarBinaryVector implements a variable width vector of binary values which could be NULL.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/VarCharVector.html#org.apache.arrow.adapter.avro.producers">VarCharVector</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/VarCharVector.html#org.apache.arrow.adapter.avro.producers">VarCharVector</a></div>
+<div class="col-last odd-row-color">
 <div class="block">VarCharVector implements a variable width vector of VARCHAR values which could be NULL.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/VectorSchemaRoot.html#org.apache.arrow.adapter.avro.producers">VectorSchemaRoot</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/VectorSchemaRoot.html#org.apache.arrow.adapter.avro.producers">VectorSchemaRoot</a></div>
+<div class="col-last even-row-color">
 <div class="block">Holder for a set of vectors to be loaded/unloaded.</div>
 </div>
 </div>
@@ -337,15 +365,45 @@ loadScripts(document, 'script');</script>
 <div class="block">TimeSecVector implements a fixed width (4 bytes) vector of time (seconds resolution) values which
  could be null.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/TimeStampMicroVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampMicroVector</a></div>
+<div class="col-first even-row-color"><a href="class-use/TimeStampMicroTZVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampMicroTZVector</a></div>
 <div class="col-last even-row-color">
+<div class="block">TimeStampMicroTZVector implements a fixed width vector (8 bytes) of timestamp (microsecond
+ resolution) values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/TimeStampMicroVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampMicroVector</a></div>
+<div class="col-last odd-row-color">
 <div class="block">TimeStampMicroVector implements a fixed width vector (8 bytes) of timestamp (microsecond
+ resolution) values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/TimeStampMilliTZVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampMilliTZVector</a></div>
+<div class="col-last even-row-color">
+<div class="block">TimeStampMilliTZVector implements a fixed width vector (8 bytes) of timestamp (millisecond
  resolution) values which could be null.</div>
 </div>
 <div class="col-first odd-row-color"><a href="class-use/TimeStampMilliVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampMilliVector</a></div>
 <div class="col-last odd-row-color">
 <div class="block">TimeStampMilliVector implements a fixed width vector (8 bytes) of timestamp (millisecond
  resolution) values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/TimeStampNanoTZVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampNanoTZVector</a></div>
+<div class="col-last even-row-color">
+<div class="block">TimeStampNanoTZVector implements a fixed width vector (8 bytes) of timestamp (nanosecond
+ resolution) values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/TimeStampNanoVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampNanoVector</a></div>
+<div class="col-last odd-row-color">
+<div class="block">TimeStampNanoVector implements a fixed width vector (8 bytes) of timestamp (nanosecond
+ resolution) values which could be null.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/TimeStampSecTZVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampSecTZVector</a></div>
+<div class="col-last even-row-color">
+<div class="block">TimeStampSecTZVector implements a fixed width vector (8 bytes) of timestamp (seconds resolution)
+ values which could be null.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/TimeStampSecVector.html#org.apache.arrow.adapter.avro.producers.logical">TimeStampSecVector</a></div>
+<div class="col-last odd-row-color">
+<div class="block">TimeStampSecVector implements a fixed width vector (8 bytes) of timestamp (seconds resolution)
+ values which could be null.</div>
 </div>
 </div>
 </section>

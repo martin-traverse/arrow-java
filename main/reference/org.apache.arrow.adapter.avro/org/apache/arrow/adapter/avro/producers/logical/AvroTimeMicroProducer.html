@@ -72,7 +72,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance"><a href="../BaseAvroProducer.html" title="class in org.apache.arrow.adapter.avro.producers">org.apache.arrow.adapter.avro.producers.BaseAvroProducer</a>&lt;<a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/BaseFixedWidthVector.html" title="class in org.apache.arrow.vector">BaseFixedWidthVector</a>&gt;
-<div class="inheritance"><a href="../AvroLongProducer.html" title="class in org.apache.arrow.adapter.avro.producers">org.apache.arrow.adapter.avro.producers.AvroLongProducer</a>
+<div class="inheritance"><a href="../AvroBigIntProducer.html" title="class in org.apache.arrow.adapter.avro.producers">org.apache.arrow.adapter.avro.producers.AvroBigIntProducer</a>
 <div class="inheritance">org.apache.arrow.adapter.avro.producers.logical.AvroTimeMicroProducer</div>
 </div>
 </div>
@@ -84,7 +84,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">AvroTimeMicroProducer</span>
-<span class="extends-implements">extends <a href="../AvroLongProducer.html" title="class in org.apache.arrow.adapter.avro.producers">AvroLongProducer</a></span></div>
+<span class="extends-implements">extends <a href="../AvroBigIntProducer.html" title="class in org.apache.arrow.adapter.avro.producers">AvroBigIntProducer</a></span></div>
 <div class="block">Producer that produces time (microseconds) values from a <a href="../../../../../../../../org.apache.arrow.vector/org/apache/arrow/vector/TimeMicroVector.html" title="class in org.apache.arrow.vector"><code>TimeMicroVector</code></a>, writes data to
  an Avro encoder.</div>
 </section>
@@ -119,8 +119,8 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-org.apache.arrow.adapter.avro.producers.AvroLongProducer">Methods inherited from class&nbsp;org.apache.arrow.adapter.avro.producers.<a href="../AvroLongProducer.html" title="class in org.apache.arrow.adapter.avro.producers">AvroLongProducer</a></h3>
-<code><a href="../AvroLongProducer.html#produce(org.apache.avro.io.Encoder)">produce</a></code></div>
+<h3 id="methods-inherited-from-class-org.apache.arrow.adapter.avro.producers.AvroBigIntProducer">Methods inherited from class&nbsp;org.apache.arrow.adapter.avro.producers.<a href="../AvroBigIntProducer.html" title="class in org.apache.arrow.adapter.avro.producers">AvroBigIntProducer</a></h3>
+<code><a href="../AvroBigIntProducer.html#produce(org.apache.avro.io.Encoder)">produce</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-org.apache.arrow.adapter.avro.producers.BaseAvroProducer">Methods inherited from class&nbsp;org.apache.arrow.adapter.avro.producers.<a href="../BaseAvroProducer.html" title="class in org.apache.arrow.adapter.avro.producers">BaseAvroProducer</a></h3>
 <code><a href="../BaseAvroProducer.html#getVector()">getVector</a>, <a href="../BaseAvroProducer.html#resetValueVector(T)">resetValueVector</a>, <a href="../BaseAvroProducer.html#setPosition(int)">setPosition</a>, <a href="../BaseAvroProducer.html#skipNull()">skipNull</a></code></div>
