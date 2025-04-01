@@ -478,13 +478,23 @@ public class AvroToArrowUtils {
 
     switch (type) {
       case UNION:
-        for (int i = 0; i < schema.getTypes().size(); i++) {
-          Schema childSchema = schema.getTypes().get(i);
-          // Union child vector should use default name
-          children.add(avroSchemaToField(childSchema, null, config));
+        boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
+        if (config.isHandleNullable() && schema.getTypes().size() == 2 && nullableUnion) {
+          Schema childSchema = schema.getTypes().get(0).getType() == Schema.Type.NULL
+              ? schema.getTypes().get(1)
+              : schema.getTypes().get(0);
+          Field childField = avroSchemaToField(childSchema, name, config, externalProps);
+          fieldType = createFieldType(true, childField.getType(), childSchema, externalProps, null);
         }
-        fieldType =
-            createFieldType(new ArrowType.Union(UnionMode.Sparse, null), schema, externalProps);
+        else {
+          for (int i = 0; i < schema.getTypes().size(); i++) {
+            Schema childSchema = schema.getTypes().get(i);
+            // Union child vector should use default name
+            children.add(avroSchemaToField(childSchema, null, config));
+          }
+          fieldType =
+              createFieldType(new ArrowType.Union(UnionMode.Sparse, null), schema, externalProps);
+        }
         break;
       case ARRAY:
         Schema elementSchema = schema.getElementType();
@@ -847,8 +857,19 @@ public class AvroToArrowUtils {
       Map<String, String> externalProps,
       DictionaryEncoding dictionary) {
 
+    return createFieldType(
+        /* nullable= */ false, arrowType, schema, externalProps, dictionary);
+  }
+
+  private static FieldType createFieldType(
+      boolean nullable,
+      ArrowType arrowType,
+      Schema schema,
+      Map<String, String> externalProps,
+      DictionaryEncoding dictionary) {
+
     return new FieldType(
-        /* nullable= */ false, arrowType, dictionary, getMetaData(schema, externalProps));
+        nullable, arrowType, dictionary, getMetaData(schema, externalProps));
   }
 
   private static String convertAliases(Set<String> aliases) {

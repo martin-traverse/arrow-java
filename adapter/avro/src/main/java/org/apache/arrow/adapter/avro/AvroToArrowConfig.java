@@ -41,6 +41,9 @@ public class AvroToArrowConfig {
   /** The field names which to skip when reading decoder values. */
   private final Set<String> skipFieldNames;
 
+  /** Interpret unions where one type is null as a nullable field. */
+  private final boolean handleNullable;
+
   /**
    * Instantiate an instance.
    *
@@ -64,6 +67,36 @@ public class AvroToArrowConfig {
     this.targetBatchSize = targetBatchSize;
     this.provider = provider;
     this.skipFieldNames = skipFieldNames;
+
+    // Default values for optional parameters
+    handleNullable = false; // Match original behavior by default
+  }
+
+  /**
+   * Instantiate an instance.
+   *
+   * @param allocator The memory allocator to construct the Arrow vectors with.
+   * @param targetBatchSize The maximum rowCount to read each time when partially convert data.
+   * @param provider The dictionary provider used for enum type, adapter will update this provider.
+   * @param skipFieldNames Field names which to skip.
+   */
+  AvroToArrowConfig(
+      BufferAllocator allocator,
+      int targetBatchSize,
+      DictionaryProvider.MapDictionaryProvider provider,
+      Set<String> skipFieldNames,
+      boolean handleNullable) {
+
+    Preconditions.checkArgument(
+        targetBatchSize == AvroToArrowVectorIterator.NO_LIMIT_BATCH_SIZE || targetBatchSize > 0,
+        "invalid targetBatchSize: %s",
+        targetBatchSize);
+
+    this.allocator = allocator;
+    this.targetBatchSize = targetBatchSize;
+    this.provider = provider;
+    this.skipFieldNames = skipFieldNames;
+    this.handleNullable = handleNullable;
   }
 
   public BufferAllocator getAllocator() {
@@ -80,5 +113,9 @@ public class AvroToArrowConfig {
 
   public Set<String> getSkipFieldNames() {
     return skipFieldNames;
+  }
+
+  public boolean isHandleNullable() {
+    return handleNullable;
   }
 }
