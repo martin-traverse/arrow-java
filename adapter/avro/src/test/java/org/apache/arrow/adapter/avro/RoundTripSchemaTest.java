@@ -17,7 +17,9 @@
 
 package org.apache.arrow.adapter.avro;
 
+import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
+import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
@@ -175,5 +177,180 @@ public class RoundTripSchemaTest {
 
     // Exact match on fields after round trip
     assertEquals(fields, arrowSchema.getFields());
+  }
+
+  // Schema round trip for logical types, nullable and non-nullable
+
+  @Test
+  public void testRoundTripDecimalTypes() {
+
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "nullableDecimal128", FieldType.nullable(new ArrowType.Decimal(10, 2, 128)), null),
+            new Field(
+                "nonNullableDecimal1281",
+                FieldType.notNullable(new ArrowType.Decimal(10, 2, 128)),
+                null),
+            new Field(
+                "nonNullableDecimal1282",
+                FieldType.notNullable(new ArrowType.Decimal(15, 5, 128)),
+                null),
+            new Field(
+                "nonNullableDecimal1283",
+                FieldType.notNullable(new ArrowType.Decimal(20, 10, 128)),
+                null),
+            new Field(
+                "nullableDecimal256", FieldType.nullable(new ArrowType.Decimal(20, 4, 256)), null),
+            new Field(
+                "nonNullableDecimal2561",
+                FieldType.notNullable(new ArrowType.Decimal(20, 4, 256)),
+                null),
+            new Field(
+                "nonNullableDecimal2562",
+                FieldType.notNullable(new ArrowType.Decimal(25, 8, 256)),
+                null),
+            new Field(
+                "nonNullableDecimal2563",
+                FieldType.notNullable(new ArrowType.Decimal(30, 15, 256)),
+                null));
+
+    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
+    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
+
+    // Compare string representations - equality not defined for logical types
+    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+  }
+
+  @Test
+  public void testRoundTripDateTypes() {
+
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "nullableDateDay", FieldType.nullable(new ArrowType.Date(DateUnit.DAY)), null),
+            new Field(
+                "nonNullableDateDay",
+                FieldType.notNullable(new ArrowType.Date(DateUnit.DAY)),
+                null));
+
+    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
+    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
+
+    // Compare string representations - equality not defined for logical types
+    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+  }
+
+  @Test
+  public void testRoundTripTimeTypes() {
+
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "nullableTimeMillis",
+                FieldType.nullable(new ArrowType.Time(TimeUnit.MILLISECOND, 32)),
+                null),
+            new Field(
+                "nonNullableTimeMillis",
+                FieldType.notNullable(new ArrowType.Time(TimeUnit.MILLISECOND, 32)),
+                null),
+            new Field(
+                "nullableTimeMicros",
+                FieldType.nullable(new ArrowType.Time(TimeUnit.MICROSECOND, 64)),
+                null),
+            new Field(
+                "nonNullableTimeMicros",
+                FieldType.notNullable(new ArrowType.Time(TimeUnit.MICROSECOND, 64)),
+                null));
+
+    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
+    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
+
+    // Compare string representations - equality not defined for logical types
+    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+  }
+
+  @Test
+  public void testRoundTripZoneAwareTimestampTypes() {
+
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "nullableTimestampMillisTz",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
+                null),
+            new Field(
+                "nonNullableTimestampMillisTz",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
+                null),
+            new Field(
+                "nullableTimestampMicrosTz",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC")),
+                null),
+            new Field(
+                "nonNullableTimestampMicrosTz",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC")),
+                null),
+            new Field(
+                "nullableTimestampNanosTz",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC")),
+                null),
+            new Field(
+                "nonNullableTimestampNanosTz",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC")),
+                null));
+
+    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
+    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
+
+    // Compare string representations - equality not defined for logical types
+    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+  }
+
+  @Test
+  public void testRoundTripLocalTimestampTypes() {
+
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "nullableTimestampMillis",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, null)),
+                null),
+            new Field(
+                "nonNullableTimestampMillis",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, null)),
+                null),
+            new Field(
+                "nullableTimestampMicros",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.MICROSECOND, null)),
+                null),
+            new Field(
+                "nonNullableTimestampMicros",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MICROSECOND, null)),
+                null),
+            new Field(
+                "nullableTimestampNanos",
+                FieldType.nullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, null)),
+                null),
+            new Field(
+                "nonNullableTimestampNanos",
+                FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, null)),
+                null));
+
+    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
+    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
+
+    // Compare string representations - equality not defined for logical types
+    assertEquals(fields.toString(), arrowSchema.getFields().toString());
   }
 }
