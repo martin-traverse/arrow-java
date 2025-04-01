@@ -406,6 +406,29 @@ public class AvroToArrowUtils {
     return new SkipConsumer(skipFunction);
   }
 
+  static org.apache.arrow.vector.types.pojo.Schema createArrowSchema(Schema schema, AvroToArrowConfig config) {
+
+    // Create an Arrow schema matching the structure of vectors built by createCompositeConsumer()
+
+    Set<String> skipFieldNames = config.getSkipFieldNames();
+    List<Field> arrowFields = new ArrayList<>(schema.getFields().size());
+
+    Schema.Type type = schema.getType();
+    if (type == Schema.Type.RECORD) {
+      for (Schema.Field field : schema.getFields()) {
+        if (!skipFieldNames.contains(field.name())) {
+          Field arrowField = avroSchemaToField(field.schema(), field.name(), config);
+          arrowFields.add(arrowField);
+        }
+      }
+    } else {
+      Field arrowField = avroSchemaToField(schema, schema.getName(), config);
+      arrowFields.add(arrowField);
+    }
+
+    return new org.apache.arrow.vector.types.pojo.Schema(arrowFields);
+  }
+
   static CompositeAvroConsumer createCompositeConsumer(Schema schema, AvroToArrowConfig config) {
 
     List<Consumer> consumers = new ArrayList<>();
