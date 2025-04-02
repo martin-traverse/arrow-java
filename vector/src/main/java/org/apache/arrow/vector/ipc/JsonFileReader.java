@@ -31,11 +31,10 @@ import static org.apache.arrow.vector.BufferLayout.BufferType.VIEWS;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -50,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.util.Preconditions;
@@ -110,12 +111,13 @@ public class JsonFileReader implements AutoCloseable, DictionaryProvider {
     this.allocator = allocator;
     MappingJsonFactory jsonFactory =
         new MappingJsonFactory(
-            new ObjectMapper()
+            JsonMapper.builder()
                 // ignore case for enums
-                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true));
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                // Allow reading NaN for floating point values
+                .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature())
+                .build());
     this.parser = jsonFactory.createParser(inputFile);
-    // Allow reading NaN for floating point values
-    this.parser.configure(Feature.ALLOW_NON_NUMERIC_NUMBERS, true);
   }
 
   @Override
@@ -187,7 +189,7 @@ public class JsonFileReader implements AutoCloseable, DictionaryProvider {
 
     if (token != END_ARRAY) {
       throw new IllegalArgumentException(
-          "Invalid token: " + token + " expected end of array at " + parser.getTokenLocation());
+          "Invalid token: " + token + " expected end of array at " + parser.currentTokenLocation());
     }
   }
 
