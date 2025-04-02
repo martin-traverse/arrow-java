@@ -29,7 +29,7 @@ public class GetSessionOptionsResult {
   private final Map<String, SessionOptionValue> sessionOptions;
 
   public GetSessionOptionsResult(Map<String, SessionOptionValue> sessionOptions) {
-    this.sessionOptions = Collections.unmodifiableMap(new HashMap(sessionOptions));
+    this.sessionOptions = Collections.unmodifiableMap(new HashMap<>(sessionOptions));
   }
 
   GetSessionOptionsResult(Flight.GetSessionOptionsResult proto) {

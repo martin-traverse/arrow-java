@@ -84,7 +84,7 @@ public class AvroAdapterBenchmarks {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(out, null);
-    DatumWriter writer = new GenericDatumWriter(schema);
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
 
     for (int i = 0; i < valueCount; i++) {
       GenericRecord record = new GenericData.Record(schema);

@@ -249,6 +249,7 @@ public class JdbcToArrowTestHelper {
     assertEquals(rowCount, vector.getValueCount());
   }
 
+  @SuppressWarnings("unchecked")
   public static void assertListVectorValues(
       ListVector listVector, int rowCount, Integer[][] values) {
     assertEquals(rowCount, listVector.getValueCount());
@@ -263,6 +264,7 @@ public class JdbcToArrowTestHelper {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static void assertMapVectorValues(
       MapVector mapVector, int rowCount, Map<String, String>[] values) {
     assertEquals(rowCount, mapVector.getValueCount());
@@ -292,6 +294,7 @@ public class JdbcToArrowTestHelper {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static Map<String, String>[] getMapValues(String[] values, String dataType) {
     String[] dataArr = getValues(values, dataType);
     Map<String, String>[] maps = new Map[dataArr.length];
