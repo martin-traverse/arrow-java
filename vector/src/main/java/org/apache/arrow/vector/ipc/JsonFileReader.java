@@ -114,10 +114,10 @@ public class JsonFileReader implements AutoCloseable, DictionaryProvider {
             JsonMapper.builder()
                 // ignore case for enums
                 .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-                // Allow reading NaN for floating point values
-                .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature())
                 .build());
     this.parser = jsonFactory.createParser(inputFile);
+    // Allow reading NaN for floating point values
+    this.parser.configure(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature(), true);
   }
 
   @Override
