@@ -18,7 +18,6 @@ package org.apache.arrow.adapter.avro;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +30,9 @@ import java.util.List;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.ValueVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.complex.BaseRepeatedValueVector;
 import org.apache.arrow.vector.complex.ListVector;
 import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.util.Text;
@@ -80,7 +81,7 @@ public class AvroTestBase {
     }
   }
 
-  protected VectorSchemaRoot writeAndRead(Schema schema, List data) throws Exception {
+  protected VectorSchemaRoot writeAndRead(Schema schema, List<?> data) throws Exception {
     File dataFile = new File(TMP, "test.avro");
 
     try (FileOutputStream fos = new FileOutputStream(dataFile);
@@ -105,13 +106,13 @@ public class AvroTestBase {
     }
   }
 
-  protected void checkArrayElement(List expected, List actual) {
+  protected void checkArrayElement(List<?> expected, List<?> actual) {
     assertEquals(expected.size(), actual.size());
     for (int i = 0; i < expected.size(); i++) {
       Object value1 = expected.get(i);
       Object value2 = actual.get(i);
       if (value1 == null) {
-        assertTrue(value2 == null);
+        assertNull(value2);
         continue;
       }
       if (value2 instanceof byte[]) {
@@ -123,13 +124,13 @@ public class AvroTestBase {
     }
   }
 
-  protected void checkPrimitiveResult(List data, FieldVector vector) {
+  protected void checkPrimitiveResult(List<?> data, FieldVector vector) {
     assertEquals(data.size(), vector.getValueCount());
     for (int i = 0; i < data.size(); i++) {
       Object value1 = data.get(i);
       Object value2 = vector.getObject(i);
       if (value1 == null) {
-        assertTrue(value2 == null);
+        assertNull(value2);
         continue;
       }
       if (value2 instanceof byte[]) {
@@ -151,7 +152,7 @@ public class AvroTestBase {
     assertEquals(schema.getFields().size(), root.getFieldVectors().size());
 
     for (int i = 0; i < schema.getFields().size(); i++) {
-      ArrayList fieldData = new ArrayList();
+      ArrayList<Object> fieldData = new ArrayList<>();
       for (GenericRecord record : data) {
         fieldData.add(record.get(i));
       }
@@ -163,13 +164,13 @@ public class AvroTestBase {
   protected void checkNestedRecordResult(
       Schema schema, List<GenericRecord> data, VectorSchemaRoot root) {
     assertEquals(data.size(), root.getRowCount());
-    assertTrue(schema.getFields().size() == 1);
+    assertEquals(1, schema.getFields().size());
 
     final Schema nestedSchema = schema.getFields().get(0).schema();
     final StructVector structVector = (StructVector) root.getFieldVectors().get(0);
 
     for (int i = 0; i < nestedSchema.getFields().size(); i++) {
-      ArrayList fieldData = new ArrayList();
+      ArrayList<Object> fieldData = new ArrayList<>();
       for (GenericRecord record : data) {
         GenericRecord nestedRecord = (GenericRecord) record.get(0);
         fieldData.add(nestedRecord.get(i));
@@ -182,7 +183,7 @@ public class AvroTestBase {
   // belows are for iterator api
 
   protected void checkArrayResult(List<List<?>> expected, List<ListVector> vectors) {
-    int valueCount = vectors.stream().mapToInt(v -> v.getValueCount()).sum();
+    int valueCount = vectors.stream().mapToInt(BaseRepeatedValueVector::getValueCount).sum();
     assertEquals(expected.size(), valueCount);
 
     int index = 0;
@@ -196,12 +197,10 @@ public class AvroTestBase {
   protected void checkRecordResult(
       Schema schema, List<GenericRecord> data, List<VectorSchemaRoot> roots) {
     roots.forEach(
-        root -> {
-          assertEquals(schema.getFields().size(), root.getFieldVectors().size());
-        });
+        root -> assertEquals(schema.getFields().size(), root.getFieldVectors().size()));
 
     for (int i = 0; i < schema.getFields().size(); i++) {
-      List fieldData = new ArrayList();
+      List<Object> fieldData = new ArrayList<>();
       List<FieldVector> vectors = new ArrayList<>();
       for (GenericRecord record : data) {
         fieldData.add(record.get(i));
@@ -213,8 +212,8 @@ public class AvroTestBase {
     }
   }
 
-  protected void checkPrimitiveResult(List data, List<FieldVector> vectors) {
-    int valueCount = vectors.stream().mapToInt(v -> v.getValueCount()).sum();
+  protected void checkPrimitiveResult(List<?> data, List<FieldVector> vectors) {
+    int valueCount = vectors.stream().mapToInt(ValueVector::getValueCount).sum();
     assertEquals(data.size(), valueCount);
 
     int index = 0;

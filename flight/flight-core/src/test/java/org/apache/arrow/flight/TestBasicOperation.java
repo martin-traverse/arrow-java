@@ -246,7 +246,7 @@ public class TestBasicOperation {
 
           assertTrue(stream.hasNext());
           Result r = stream.next();
-          assertArrayEquals("world".getBytes(Charsets.UTF_8), r.getBody());
+          assertArrayEquals("world".getBytes(StandardCharsets.UTF_8), r.getBody());
         });
     test(
         c -> {
@@ -254,11 +254,11 @@ public class TestBasicOperation {
 
           assertTrue(stream.hasNext());
           Result r = stream.next();
-          assertArrayEquals("world".getBytes(Charsets.UTF_8), r.getBody());
+          assertArrayEquals("world".getBytes(StandardCharsets.UTF_8), r.getBody());
 
           assertTrue(stream.hasNext());
           r = stream.next();
-          assertArrayEquals("!".getBytes(Charsets.UTF_8), r.getBody());
+          assertArrayEquals("!".getBytes(StandardCharsets.UTF_8), r.getBody());
           assertFalse(stream.hasNext());
         });
   }
@@ -542,7 +542,7 @@ public class TestBasicOperation {
               .setFlightDescriptor(
                   Flight.FlightDescriptor.newBuilder()
                       .setType(DescriptorType.CMD)
-                      .setCmd(ByteString.copyFrom("cool thing", Charsets.UTF_8)))
+                      .setCmd(ByteString.copyFrom("cool thing", StandardCharsets.UTF_8)))
               .build();
       try {
         listener.onNext(new FlightInfo(getInfo));
@@ -629,7 +629,7 @@ public class TestBasicOperation {
                 .setFlightDescriptor(
                     Flight.FlightDescriptor.newBuilder()
                         .setType(DescriptorType.CMD)
-                        .setCmd(ByteString.copyFrom("cool thing", Charsets.UTF_8)))
+                        .setCmd(ByteString.copyFrom("cool thing", StandardCharsets.UTF_8)))
                 .addEndpoint(
                     Flight.FlightEndpoint.newBuilder()
                         .addLocation(new Location("https://example.com").toProtocol()))
@@ -655,14 +655,14 @@ public class TestBasicOperation {
       switch (action.getType()) {
         case "hello":
           {
-            listener.onNext(new Result("world".getBytes(Charsets.UTF_8)));
+            listener.onNext(new Result("world".getBytes(StandardCharsets.UTF_8)));
             listener.onCompleted();
             break;
           }
         case "hellooo":
           {
-            listener.onNext(new Result("world".getBytes(Charsets.UTF_8)));
-            listener.onNext(new Result("!".getBytes(Charsets.UTF_8)));
+            listener.onNext(new Result("world".getBytes(StandardCharsets.UTF_8)));
+            listener.onNext(new Result("!".getBytes(StandardCharsets.UTF_8)));
             listener.onCompleted();
             break;
           }

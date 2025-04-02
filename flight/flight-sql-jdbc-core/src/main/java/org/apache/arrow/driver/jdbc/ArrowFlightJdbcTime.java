@@ -52,9 +52,8 @@ public class ArrowFlightJdbcTime extends Time {
 
   @VisibleForTesting
   ArrowFlightJdbcTime(final LocalTime time) {
-    // Although the constructor is deprecated, this is the exact same code as
-    // Time#valueOf(LocalTime)
-    super(time.getHour(), time.getMinute(), time.getSecond());
+    // java.sql.Time wants time in milliseconds to avoid a compiler warning
+    super((time.getHour() * 3600L * time.getMinute() * 60L + time.getSecond()) * 1000L);
     millisReprValue = time.get(ChronoField.MILLI_OF_SECOND);
   }
 

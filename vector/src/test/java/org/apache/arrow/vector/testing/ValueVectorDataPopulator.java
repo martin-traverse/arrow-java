@@ -653,7 +653,7 @@ public class ValueVectorDataPopulator {
           curPos += 1;
         }
       }
-      vector.getOffsetBuffer().setInt((i + 1) * BaseRepeatedValueVector.OFFSET_WIDTH, curPos);
+      vector.getOffsetBuffer().setInt((long) (i + 1) * BaseRepeatedValueVector.OFFSET_WIDTH, curPos);
     }
     dataVector.setValueCount(curPos);
     vector.setLastSet(values.length - 1);

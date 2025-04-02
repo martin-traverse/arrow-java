@@ -51,7 +51,7 @@ final class SessionOptionsProducer extends NoOpFlightSqlProducer {
       SetSessionOptionsRequest request,
       CallContext context,
       StreamListener<SetSessionOptionsResult> listener) {
-    Map<String, SetSessionOptionsResult.Error> errors = new HashMap();
+    Map<String, SetSessionOptionsResult.Error> errors = new HashMap<>();
 
     ServerSessionMiddleware middleware = context.getMiddleware(sessionMiddlewareKey);
     ServerSessionMiddleware.Session session = middleware.getSession();
