@@ -20,6 +20,7 @@ import static org.apache.arrow.vector.BufferLayout.BufferType.*;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.NopIndenter;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
@@ -32,6 +33,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.util.Preconditions;
 import org.apache.arrow.vector.BaseLargeVariableWidthVector;
@@ -123,15 +126,17 @@ public class JsonFileWriter implements AutoCloseable {
 
   /** Constructs a new writer that will output to <code>outputFile</code> with the given options. */
   public JsonFileWriter(File outputFile, JSONWriteConfig config) throws IOException {
-    MappingJsonFactory jsonFactory = new MappingJsonFactory();
+    MappingJsonFactory jsonFactory = new MappingJsonFactory(
+        JsonMapper.builder()
+            // Allow writing of floating point NaN values not as strings
+            .disable(JsonWriteFeature.WRITE_NAN_AS_STRINGS.mappedFeature())
+            .build());
     this.generator = jsonFactory.createGenerator(outputFile, JsonEncoding.UTF8);
     if (config.pretty) {
       DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
       prettyPrinter.indentArraysWith(NopIndenter.instance);
       this.generator.setPrettyPrinter(prettyPrinter);
     }
-    // Allow writing of floating point NaN values not as strings
-    this.generator.configure(JsonGenerator.Feature.QUOTE_NON_NUMERIC_NUMBERS, false);
   }
 
   /** Writes out the "header" of the file including the schema and any dictionaries required. */
