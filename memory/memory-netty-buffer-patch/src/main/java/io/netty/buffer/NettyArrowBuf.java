@@ -404,6 +404,7 @@ public class NettyArrowBuf extends AbstractByteBuf implements AutoCloseable {
   }
 
   @Override
+  @Deprecated
   public ByteOrder order() {
     return ByteOrder.LITTLE_ENDIAN;
   }
