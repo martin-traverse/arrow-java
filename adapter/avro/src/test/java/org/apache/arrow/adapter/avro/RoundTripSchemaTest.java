@@ -368,13 +368,13 @@ public class RoundTripSchemaTest {
                 "nullableIntList",
                 FieldType.nullable(new ArrowType.List()),
                 Arrays.asList(
-                    new Field("item", FieldType.nullable(new ArrowType.Int(32, true)), null))),
+                    new Field("$data$", FieldType.nullable(new ArrowType.Int(32, true)), null))),
             new Field(
                 "nullableDoubleList",
                 FieldType.nullable(new ArrowType.List()),
                 Arrays.asList(
                     new Field(
-                        "item",
+                        "$data$",
                         FieldType.notNullable(
                             new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)),
                         null))),
@@ -383,13 +383,13 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.List()),
                 Arrays.asList(
                     new Field(
-                        "item", FieldType.nullable(new ArrowType.Decimal(10, 2, 128)), null))),
+                        "$data$", FieldType.nullable(new ArrowType.Decimal(10, 2, 128)), null))),
             new Field(
                 "nonNullableTimestampList",
                 FieldType.notNullable(new ArrowType.List()),
                 Arrays.asList(
                     new Field(
-                        "item",
+                        "$data$",
                         FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
                         null))));
 
