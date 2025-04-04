@@ -498,20 +498,20 @@ public class AvroToArrowUtils {
         break;
       case ARRAY:
         Schema elementSchema = schema.getElementType();
-        children.add(avroSchemaToField(elementSchema, elementSchema.getName(), config));
+        children.add(avroSchemaToField(elementSchema, ListVector.DATA_VECTOR_NAME, config));
         fieldType = createFieldType(new ArrowType.List(), schema, externalProps);
         break;
       case MAP:
         // MapVector internal struct field and key field should be non-nullable
         FieldType keyFieldType =
             new FieldType(/* nullable= */ false, new ArrowType.Utf8(), /* dictionary= */ null);
-        Field keyField = new Field("key", keyFieldType, /* children= */ null);
-        Field valueField = avroSchemaToField(schema.getValueType(), "value", config);
+        Field keyField = new Field(MapVector.KEY_NAME, keyFieldType, /* children= */ null);
+        Field valueField = avroSchemaToField(schema.getValueType(), MapVector.VALUE_NAME, config);
 
         FieldType structFieldType =
             new FieldType(false, new ArrowType.Struct(), /* dictionary= */ null);
         Field structField =
-            new Field("internal", structFieldType, Arrays.asList(keyField, valueField));
+            new Field(MapVector.DATA_VECTOR_NAME, structFieldType, Arrays.asList(keyField, valueField));
         children.add(structField);
         fieldType =
             createFieldType(new ArrowType.Map(/* keysSorted= */ false), schema, externalProps);
