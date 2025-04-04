@@ -485,6 +485,7 @@ public class AvroToArrowUtils {
               : schema.getTypes().get(0);
           Field childField = avroSchemaToField(childSchema, name, config, externalProps);
           fieldType = createFieldType(true, childField.getType(), childSchema, externalProps, null);
+          children.addAll(childField.getChildren());
         }
         else {
           for (int i = 0; i < schema.getTypes().size(); i++) {
@@ -532,7 +533,7 @@ public class AvroToArrowUtils {
             if (aliases != null) {
               extProps.put("aliases", convertAliases(aliases));
             }
-            children.add(avroSchemaToField(childSchema, fullChildName, config, extProps));
+            children.add(avroSchemaToField(childSchema, field.name(), config, extProps));
           }
         }
         fieldType = createFieldType(new ArrowType.Struct(), schema, externalProps);
@@ -624,7 +625,7 @@ public class AvroToArrowUtils {
     if (name == null) {
       name = getDefaultFieldName(fieldType.getType());
     }
-    return new Field(name, fieldType, children.size() == 0 ? null : children);
+    return new Field(name, fieldType, children.isEmpty() ? null : children);
   }
 
   private static Consumer createArrayConsumer(
