@@ -582,9 +582,17 @@ public class AvroToArrowUtils {
         if (logicalType instanceof LogicalTypes.TimeMicros) {
           longArrowType = new ArrowType.Time(TimeUnit.MICROSECOND, 64);
         } else if (logicalType instanceof LogicalTypes.TimestampMillis) {
-          longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
+          longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC");
         } else if (logicalType instanceof LogicalTypes.TimestampMicros) {
+          longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
+        } else if (logicalType instanceof LogicalTypes.TimestampNanos) {
+          longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC");
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis) {
+          longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros) {
           longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos) {
+          longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
         } else {
           longArrowType = new ArrowType.Int(64, /* isSigned= */ true);
         }
