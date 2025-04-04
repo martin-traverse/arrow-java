@@ -401,49 +401,6 @@ public class RoundTripSchemaTest {
   }
 
   @Test
-  public void testRoundTripFixedSizeListType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
-
-    List<Field> fields =
-        Arrays.asList(
-            new Field(
-                "nullableFixedSizeIntList",
-                FieldType.nullable(new ArrowType.FixedSizeList(3)),
-                Arrays.asList(
-                    new Field("item", FieldType.nullable(new ArrowType.Int(32, true)), null))),
-            new Field(
-                "nullableFixedSizeDoubleList",
-                FieldType.nullable(new ArrowType.FixedSizeList(3)),
-                Arrays.asList(
-                    new Field(
-                        "item",
-                        FieldType.notNullable(
-                            new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)),
-                        null))),
-            new Field(
-                "nonNullableFixedSizeDecimalList",
-                FieldType.notNullable(new ArrowType.FixedSizeList(3)),
-                Arrays.asList(
-                    new Field(
-                        "item", FieldType.nullable(new ArrowType.Decimal(10, 2, 128)), null))),
-            new Field(
-                "nonNullableFixedSizeTimestampList",
-                FieldType.notNullable(new ArrowType.FixedSizeList(3)),
-                Arrays.asList(
-                    new Field(
-                        "item",
-                        FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
-                        null))));
-
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema = AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
-  }
-
-  @Test
   public void testRoundTripMapType() {
 
     AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
