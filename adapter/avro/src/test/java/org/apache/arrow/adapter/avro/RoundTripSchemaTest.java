@@ -204,10 +204,10 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Decimal(20, 10, 128)),
                 null),
             new Field(
-                "nullableDecimal256", FieldType.nullable(new ArrowType.Decimal(20, 4, 256)), null),
+                "nullableDecimal256", FieldType.nullable(new ArrowType.Decimal(55, 15, 256)), null),
             new Field(
                 "nonNullableDecimal2561",
-                FieldType.notNullable(new ArrowType.Decimal(20, 4, 256)),
+                FieldType.notNullable(new ArrowType.Decimal(55, 25, 256)),
                 null),
             new Field(
                 "nonNullableDecimal2562",
@@ -215,7 +215,7 @@ public class RoundTripSchemaTest {
                 null),
             new Field(
                 "nonNullableDecimal2563",
-                FieldType.notNullable(new ArrowType.Decimal(30, 15, 256)),
+                FieldType.notNullable(new ArrowType.Decimal(60, 50, 256)),
                 null));
 
     Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
