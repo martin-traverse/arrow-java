@@ -485,6 +485,7 @@ public class AvroToArrowUtils {
               : schema.getTypes().get(0);
           Field childField = avroSchemaToField(childSchema, name, config, externalProps);
           fieldType = createFieldType(true, childField.getType(), childSchema, externalProps, null);
+          children.addAll(childField.getChildren());
         }
         else {
           for (int i = 0; i < schema.getTypes().size(); i++) {
