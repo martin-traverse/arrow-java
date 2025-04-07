@@ -192,11 +192,12 @@ public class AvroToArrowUtils {
       case FIXED:
         Map<String, String> extProps = createExternalProps(schema);
         if (logicalType instanceof LogicalTypes.Decimal) {
-          arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType);
+          arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
           fieldType =
               new FieldType(
                   nullable, arrowType, /* dictionary= */ null, getMetaData(schema, extProps));
           vector = createVector(consumerVector, fieldType, name, allocator);
+          // TODO: Decimal 256
           consumer =
               new AvroDecimalConsumer.FixedDecimalConsumer(
                   (DecimalVector) vector, schema.getFixedSize());
@@ -277,10 +278,11 @@ public class AvroToArrowUtils {
         break;
       case BYTES:
         if (logicalType instanceof LogicalTypes.Decimal) {
-          arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType);
+          arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
           vector = createVector(consumerVector, fieldType, name, allocator);
+          // TODO: Decimal 256
           consumer = new AvroDecimalConsumer.BytesDecimalConsumer((DecimalVector) vector);
         } else {
           arrowType = new ArrowType.Binary();
@@ -304,19 +306,31 @@ public class AvroToArrowUtils {
     return consumer;
   }
 
-  private static ArrowType createDecimalArrowType(LogicalTypes.Decimal logicalType) {
+  private static ArrowType createDecimalArrowType(LogicalTypes.Decimal logicalType, Schema schema) {
     final int scale = logicalType.getScale();
     final int precision = logicalType.getPrecision();
     Preconditions.checkArgument(
-        precision > 0 && precision <= 38, "Precision must be in range of 1 to 38");
-    Preconditions.checkArgument(scale >= 0 && scale <= 38, "Scale must be in range of 0 to 38.");
+        precision > 0 && precision <= 76, "Precision must be in range of 1 to 76");
+    Preconditions.checkArgument(scale >= 0 && scale <= 76, "Scale must be in range of 0 to 76.");
     Preconditions.checkArgument(
         scale <= precision,
         "Invalid decimal scale: %s (greater than precision: %s)",
         scale,
         precision);
 
-    return new ArrowType.Decimal(precision, scale, 128);
+    if (schema.getType() == Schema.Type.FIXED) {
+      if (schema.getFixedSize() <= 16) {
+        return new ArrowType.Decimal(precision, scale, 128);
+      } else {
+        return new ArrowType.Decimal(precision, scale, 256);
+      }
+    } else {
+      if (precision <= 38) {
+        return new ArrowType.Decimal(precision, scale, 128);
+      } else {
+        return new ArrowType.Decimal(precision, scale, 256);
+      }
+    }
   }
 
   private static Consumer createSkipConsumer(Schema schema) {
@@ -558,7 +572,7 @@ public class AvroToArrowUtils {
       case FIXED:
         final ArrowType fixedArrowType;
         if (logicalType instanceof LogicalTypes.Decimal) {
-          fixedArrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType);
+          fixedArrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
         } else {
           fixedArrowType = new ArrowType.FixedSizeBinary(schema.getFixedSize());
         }
@@ -608,7 +622,7 @@ public class AvroToArrowUtils {
       case BYTES:
         final ArrowType bytesArrowType;
         if (logicalType instanceof LogicalTypes.Decimal) {
-          bytesArrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType);
+          bytesArrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
         } else {
           bytesArrowType = new ArrowType.Binary();
         }
