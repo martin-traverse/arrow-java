@@ -40,6 +40,7 @@ import org.apache.arrow.adapter.avro.consumers.AvroFloatConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroIntConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroLongConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroMapConsumer;
+import org.apache.arrow.adapter.avro.consumers.AvroNullableConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroNullConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroStringConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroStructConsumer;
@@ -169,7 +170,17 @@ public class AvroToArrowUtils {
 
     switch (type) {
       case UNION:
-        consumer = createUnionConsumer(schema, name, config, consumerVector);
+        boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
+        if (config.isHandleNullable() && schema.getTypes().size() == 2 && nullableUnion) {
+          int nullIndex = schema.getTypes().get(0).getType() == Schema.Type.NULL ? 0 : 1;
+          int childIndex = nullIndex == 0 ? 1 : 0;
+          Schema childSchema = schema.getTypes().get(childIndex);
+          Consumer<?> childConsumer = createConsumer(childSchema, name, true, config, consumerVector);
+          consumer = new AvroNullableConsumer<>(childConsumer, nullIndex);
+        }
+        else {
+          consumer = createUnionConsumer(schema, name, config, consumerVector);
+        }
         break;
       case ARRAY:
         consumer = createArrayConsumer(schema, name, config, consumerVector);
