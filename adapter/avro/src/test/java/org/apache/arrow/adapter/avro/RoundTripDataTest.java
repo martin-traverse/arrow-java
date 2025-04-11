@@ -14,46 +14,121 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.arrow.adapter.avro;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.apache.arrow.adapter.avro.producers.CompositeAvroProducer;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
-import org.apache.arrow.vector.*;
+import org.apache.arrow.vector.BigIntVector;
+import org.apache.arrow.vector.BitVector;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.FixedSizeBinaryVector;
+import org.apache.arrow.vector.Float4Vector;
+import org.apache.arrow.vector.Float8Vector;
+import org.apache.arrow.vector.IntVector;
+import org.apache.arrow.vector.NullVector;
+import org.apache.arrow.vector.VarBinaryVector;
+import org.apache.arrow.vector.VarCharVector;
+import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.avro.Schema;
-import org.apache.avro.io.*;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.EncoderFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-
 public class RoundTripDataTest {
 
-  @TempDir
-  public static File TMP;
+  @TempDir public static File TMP;
 
   private static AvroToArrowConfig basicConfig(BufferAllocator allocator) {
     return new AvroToArrowConfig(allocator, 1000, null, Collections.emptySet(), true);
   }
 
   private static VectorSchemaRoot readDataFile(
-      Schema schema, File dataFile, BufferAllocator allocator)
-      throws IOException {
+      Schema schema, File dataFile, BufferAllocator allocator) throws Exception {
 
     try (FileInputStream fis = new FileInputStream(dataFile)) {
       BinaryDecoder decoder = new DecoderFactory().directBinaryDecoder(fis, null);
       return AvroToArrow.avroToArrow(schema, decoder, basicConfig(allocator));
+    }
+  }
+
+  private static void roundTripTest(
+      VectorSchemaRoot root, BufferAllocator allocator, File dataFile, int rowCount)
+      throws Exception {
+
+    // Write an AVRO block using the producer classes
+    try (FileOutputStream fos = new FileOutputStream(dataFile)) {
+      BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
+      CompositeAvroProducer producer =
+          ArrowToAvroUtils.createCompositeProducer(root.getFieldVectors());
+      for (int row = 0; row < rowCount; row++) {
+        producer.produce(encoder);
+      }
+      encoder.flush();
+    }
+
+    // Generate AVRO schema
+    Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
+
+    // Read back in and compare
+    try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
+
+      assertEquals(root.getSchema(), roundTrip.getSchema());
+      assertEquals(rowCount, roundTrip.getRowCount());
+
+      // Read and check values
+      for (int row = 0; row < rowCount; row++) {
+        assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
+      }
+    }
+  }
+
+  private static void roundTripByteArrayTest(
+      VectorSchemaRoot root, BufferAllocator allocator, File dataFile, int rowCount)
+      throws Exception {
+
+    // Write an AVRO block using the producer classes
+    try (FileOutputStream fos = new FileOutputStream(dataFile)) {
+      BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
+      CompositeAvroProducer producer =
+          ArrowToAvroUtils.createCompositeProducer(root.getFieldVectors());
+      for (int row = 0; row < rowCount; row++) {
+        producer.produce(encoder);
+      }
+      encoder.flush();
+    }
+
+    // Generate AVRO schema
+    Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
+
+    // Read back in and compare
+    try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
+
+      assertEquals(root.getSchema(), roundTrip.getSchema());
+      assertEquals(rowCount, roundTrip.getRowCount());
+
+      // Read and check values
+      for (int row = 0; row < rowCount; row++) {
+        byte[] rootBytes = (byte[]) root.getVector(0).getObject(row);
+        byte[] roundTripBytes = (byte[]) roundTrip.getVector(0).getObject(row);
+        assertArrayEquals(rootBytes, roundTripBytes);
+      }
     }
   }
 
@@ -92,30 +167,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullColumn.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -145,30 +197,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripBooleans.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -203,30 +232,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullableBooleans.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -243,10 +249,7 @@ public class RoundTripDataTest {
     BigIntVector int64Vector = new BigIntVector(new Field("int64", int64Field, null), allocator);
 
     // Set up VSR
-    List<FieldVector> vectors =
-        Arrays.asList(
-            int32Vector,
-            int64Vector);
+    List<FieldVector> vectors = Arrays.asList(int32Vector, int64Vector);
 
     int rowCount = 12;
 
@@ -271,30 +274,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripIntegers.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -313,10 +293,7 @@ public class RoundTripDataTest {
     int rowCount = 3;
 
     // Set up VSR
-    List<FieldVector> vectors =
-        Arrays.asList(
-            int32Vector,
-            int64Vector);
+    List<FieldVector> vectors = Arrays.asList(int32Vector, int64Vector);
 
     try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
 
@@ -337,33 +314,9 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullableIntegers.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
-
 
   @Test
   public void testRoundTripFloatingPoints() throws Exception {
@@ -413,30 +366,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripFloatingPoints.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -480,30 +410,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullableFloatingPoints.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -536,30 +443,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripStrings.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -591,30 +475,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullableStrings.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          assertEquals(root.getVector(0).getObject(row), roundTrip.getVector(0).getObject(row));
-        }
-      }
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -652,32 +513,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripBinary.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          byte[] rootBytes = (byte[]) root.getVector(0).getObject(row);
-          byte[] roundTripBytes = (byte[]) roundTrip.getVector(0).getObject(row);
-          assertArrayEquals(rootBytes, roundTripBytes);
-        }
-      }
+      roundTripByteArrayTest(root, allocator, dataFile, rowCount);
     }
   }
 
@@ -716,32 +552,7 @@ public class RoundTripDataTest {
 
       File dataFile = new File(TMP, "testRoundTripNullableBinary.avro");
 
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Generate AVRO schema
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields());
-
-      // Read back in and compare
-      try (VectorSchemaRoot roundTrip = readDataFile(schema, dataFile, allocator)) {
-
-        assertEquals(root.getSchema(), roundTrip.getSchema());
-        assertEquals(rowCount, roundTrip.getRowCount());
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          byte[] rootBytes = (byte[]) root.getVector(0).getObject(row);
-          byte[] roundTripBytes = (byte[]) roundTrip.getVector(0).getObject(row);
-          assertArrayEquals(rootBytes, roundTripBytes);
-        }
-      }
+      roundTripByteArrayTest(root, allocator, dataFile, rowCount);
     }
   }
 }
