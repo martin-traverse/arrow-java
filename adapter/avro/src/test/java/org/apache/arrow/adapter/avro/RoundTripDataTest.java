@@ -22,6 +22,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,16 +35,29 @@ import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
+import org.apache.arrow.vector.DateDayVector;
+import org.apache.arrow.vector.DecimalVector;
+import org.apache.arrow.vector.Decimal256Vector;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.FixedSizeBinaryVector;
 import org.apache.arrow.vector.Float4Vector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.IntVector;
 import org.apache.arrow.vector.NullVector;
+import org.apache.arrow.vector.TimeMilliVector;
+import org.apache.arrow.vector.TimeMicroVector;
+import org.apache.arrow.vector.TimeStampMicroTZVector;
+import org.apache.arrow.vector.TimeStampMicroVector;
+import org.apache.arrow.vector.TimeStampMilliTZVector;
+import org.apache.arrow.vector.TimeStampMilliVector;
+import org.apache.arrow.vector.TimeStampNanoTZVector;
+import org.apache.arrow.vector.TimeStampNanoVector;
 import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
+import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
@@ -553,6 +571,504 @@ public class RoundTripDataTest {
       File dataFile = new File(TMP, "testRoundTripNullableBinary.avro");
 
       roundTripByteArrayTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  // Data round trip for logical types, nullable and non-nullable
+
+  @Test
+  public void testRoundTripDecimals() throws Exception {
+
+    // Field definitions
+    FieldType decimal128Field1 = new FieldType(false, new ArrowType.Decimal(38, 10, 128), null);
+    FieldType decimal128Field2 = new FieldType(false, new ArrowType.Decimal(38, 5, 128), null);
+    FieldType decimal256Field1 = new FieldType(false, new ArrowType.Decimal(76, 20, 256), null);
+    FieldType decimal256Field2 = new FieldType(false, new ArrowType.Decimal(76, 10, 256), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    DecimalVector decimal128Vector1 =
+        new DecimalVector(new Field("decimal128_1", decimal128Field1, null), allocator);
+    DecimalVector decimal128Vector2 =
+        new DecimalVector(new Field("decimal128_2", decimal128Field2, null), allocator);
+    Decimal256Vector decimal256Vector1 =
+        new Decimal256Vector(new Field("decimal256_1", decimal256Field1, null), allocator);
+    Decimal256Vector decimal256Vector2 =
+        new Decimal256Vector(new Field("decimal256_2", decimal256Field2, null), allocator);
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(decimal128Vector1, decimal128Vector2, decimal256Vector1, decimal256Vector2);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      decimal128Vector1.setSafe(
+          0, new BigDecimal("12345.67890").setScale(10, RoundingMode.UNNECESSARY));
+      decimal128Vector1.setSafe(
+          1, new BigDecimal("-98765.43210").setScale(10, RoundingMode.UNNECESSARY));
+      decimal128Vector1.setSafe(
+          2, new BigDecimal("54321.09876").setScale(10, RoundingMode.UNNECESSARY));
+
+      decimal128Vector2.setSafe(
+          0, new BigDecimal("12345.67890").setScale(5, RoundingMode.UNNECESSARY));
+      decimal128Vector2.setSafe(
+          1, new BigDecimal("-98765.43210").setScale(5, RoundingMode.UNNECESSARY));
+      decimal128Vector2.setSafe(
+          2, new BigDecimal("54321.09876").setScale(5, RoundingMode.UNNECESSARY));
+
+      decimal256Vector1.setSafe(
+          0,
+          new BigDecimal("12345678901234567890.12345678901234567890")
+              .setScale(20, RoundingMode.UNNECESSARY));
+      decimal256Vector1.setSafe(
+          1,
+          new BigDecimal("-98765432109876543210.98765432109876543210")
+              .setScale(20, RoundingMode.UNNECESSARY));
+      decimal256Vector1.setSafe(
+          2,
+          new BigDecimal("54321098765432109876.54321098765432109876")
+              .setScale(20, RoundingMode.UNNECESSARY));
+
+      decimal256Vector2.setSafe(
+          0,
+          new BigDecimal("12345678901234567890.1234567890").setScale(10, RoundingMode.UNNECESSARY));
+      decimal256Vector2.setSafe(
+          1,
+          new BigDecimal("-98765432109876543210.9876543210")
+              .setScale(10, RoundingMode.UNNECESSARY));
+      decimal256Vector2.setSafe(
+          2,
+          new BigDecimal("54321098765432109876.5432109876").setScale(10, RoundingMode.UNNECESSARY));
+
+      File dataFile = new File(TMP, "testRoundTripDecimals.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableDecimals() throws Exception {
+
+    // Field definitions
+    FieldType decimal128Field1 = new FieldType(true, new ArrowType.Decimal(38, 10, 128), null);
+    FieldType decimal128Field2 = new FieldType(true, new ArrowType.Decimal(38, 5, 128), null);
+    FieldType decimal256Field1 = new FieldType(true, new ArrowType.Decimal(76, 20, 256), null);
+    FieldType decimal256Field2 = new FieldType(true, new ArrowType.Decimal(76, 10, 256), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    DecimalVector decimal128Vector1 =
+        new DecimalVector(new Field("decimal128_1", decimal128Field1, null), allocator);
+    DecimalVector decimal128Vector2 =
+        new DecimalVector(new Field("decimal128_2", decimal128Field2, null), allocator);
+    Decimal256Vector decimal256Vector1 =
+        new Decimal256Vector(new Field("decimal256_1", decimal256Field1, null), allocator);
+    Decimal256Vector decimal256Vector2 =
+        new Decimal256Vector(new Field("decimal256_2", decimal256Field2, null), allocator);
+
+    int rowCount = 3;
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(decimal128Vector1, decimal128Vector2, decimal256Vector1, decimal256Vector2);
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      decimal128Vector1.setNull(0);
+      decimal128Vector1.setSafe(1, BigDecimal.ZERO.setScale(10, RoundingMode.UNNECESSARY));
+      decimal128Vector1.setSafe(
+          2, new BigDecimal("12345.67890").setScale(10, RoundingMode.UNNECESSARY));
+
+      decimal128Vector2.setNull(0);
+      decimal128Vector2.setSafe(1, BigDecimal.ZERO.setScale(5, RoundingMode.UNNECESSARY));
+      decimal128Vector2.setSafe(
+          2, new BigDecimal("98765.43210").setScale(5, RoundingMode.UNNECESSARY));
+
+      decimal256Vector1.setNull(0);
+      decimal256Vector1.setSafe(1, BigDecimal.ZERO.setScale(20, RoundingMode.UNNECESSARY));
+      decimal256Vector1.setSafe(
+          2,
+          new BigDecimal("12345678901234567890.12345678901234567890")
+              .setScale(20, RoundingMode.UNNECESSARY));
+
+      decimal256Vector2.setNull(0);
+      decimal256Vector2.setSafe(1, BigDecimal.ZERO.setScale(10, RoundingMode.UNNECESSARY));
+      decimal256Vector2.setSafe(
+          2,
+          new BigDecimal("98765432109876543210.9876543210").setScale(10, RoundingMode.UNNECESSARY));
+
+      File dataFile = new File(TMP, "testRoundTripNullableDecimals.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripDates() throws Exception {
+
+    // Field definitions
+    FieldType dateDayField = new FieldType(false, new ArrowType.Date(DateUnit.DAY), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    DateDayVector dateDayVector =
+        new DateDayVector(new Field("dateDay", dateDayField, null), allocator);
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(dateDayVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      dateDayVector.setSafe(0, (int) LocalDate.now().toEpochDay());
+      dateDayVector.setSafe(1, (int) LocalDate.now().toEpochDay() + 1);
+      dateDayVector.setSafe(2, (int) LocalDate.now().toEpochDay() + 2);
+
+      File dataFile = new File(TMP, "testRoundTripDates.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableDates() throws Exception {
+
+    // Field definitions
+    FieldType dateDayField = new FieldType(true, new ArrowType.Date(DateUnit.DAY), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    DateDayVector dateDayVector =
+        new DateDayVector(new Field("dateDay", dateDayField, null), allocator);
+
+    int rowCount = 3;
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(dateDayVector);
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      dateDayVector.setNull(0);
+      dateDayVector.setSafe(1, 0);
+      dateDayVector.setSafe(2, (int) LocalDate.now().toEpochDay());
+
+      File dataFile = new File(TMP, "testRoundTripNullableDates.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+
+  @Test
+  public void testRoundTripTimes() throws Exception {
+
+    // Field definitions
+    FieldType timeMillisField =
+        new FieldType(false, new ArrowType.Time(TimeUnit.MILLISECOND, 32), null);
+    FieldType timeMicrosField =
+        new FieldType(false, new ArrowType.Time(TimeUnit.MICROSECOND, 64), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeMilliVector timeMillisVector =
+        new TimeMilliVector(new Field("timeMillis", timeMillisField, null), allocator);
+    TimeMicroVector timeMicrosVector =
+        new TimeMicroVector(new Field("timeMicros", timeMicrosField, null), allocator);
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timeMillisVector, timeMicrosVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timeMillisVector.setSafe(
+          0, (int) (ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000000));
+      timeMillisVector.setSafe(
+          1, (int) (ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000000) - 1000);
+      timeMillisVector.setSafe(
+          2, (int) (ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000000) - 2000);
+
+      timeMicrosVector.setSafe(0, ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000);
+      timeMicrosVector.setSafe(1, ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000 - 1000000);
+      timeMicrosVector.setSafe(2, ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000 - 2000000);
+
+      File dataFile = new File(TMP, "testRoundTripTimes.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableTimes() throws Exception {
+
+    // Field definitions
+    FieldType timeMillisField =
+        new FieldType(true, new ArrowType.Time(TimeUnit.MILLISECOND, 32), null);
+    FieldType timeMicrosField =
+        new FieldType(true, new ArrowType.Time(TimeUnit.MICROSECOND, 64), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeMilliVector timeMillisVector =
+        new TimeMilliVector(new Field("timeMillis", timeMillisField, null), allocator);
+    TimeMicroVector timeMicrosVector =
+        new TimeMicroVector(new Field("timeMicros", timeMicrosField, null), allocator);
+
+    int rowCount = 3;
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timeMillisVector, timeMicrosVector);
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timeMillisVector.setNull(0);
+      timeMillisVector.setSafe(1, 0);
+      timeMillisVector.setSafe(
+          2, (int) (ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000000));
+
+      timeMicrosVector.setNull(0);
+      timeMicrosVector.setSafe(1, 0);
+      timeMicrosVector.setSafe(2, ZonedDateTime.now().toLocalTime().toNanoOfDay() / 1000);
+
+      File dataFile = new File(TMP, "testRoundTripNullableTimes.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+
+  @Test
+  public void testRoundTripZoneAwareTimestamps() throws Exception {
+
+    // Field definitions
+    FieldType timestampMillisField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC"), null);
+    FieldType timestampMicrosField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC"), null);
+    FieldType timestampNanosField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC"), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeStampMilliTZVector timestampMillisVector =
+        new TimeStampMilliTZVector(
+            new Field("timestampMillis", timestampMillisField, null), allocator);
+    TimeStampMicroTZVector timestampMicrosVector =
+        new TimeStampMicroTZVector(
+            new Field("timestampMicros", timestampMicrosField, null), allocator);
+    TimeStampNanoTZVector timestampNanosVector =
+        new TimeStampNanoTZVector(
+            new Field("timestampNanos", timestampNanosField, null), allocator);
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timestampMillisVector, timestampMicrosVector, timestampNanosVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timestampMillisVector.setSafe(0, (int) Instant.now().toEpochMilli());
+      timestampMillisVector.setSafe(1, (int) Instant.now().toEpochMilli() - 1000);
+      timestampMillisVector.setSafe(2, (int) Instant.now().toEpochMilli() - 2000);
+
+      timestampMicrosVector.setSafe(0, Instant.now().toEpochMilli() * 1000);
+      timestampMicrosVector.setSafe(1, (Instant.now().toEpochMilli() - 1000) * 1000);
+      timestampMicrosVector.setSafe(2, (Instant.now().toEpochMilli() - 2000) * 1000);
+
+      timestampNanosVector.setSafe(0, Instant.now().toEpochMilli() * 1000000);
+      timestampNanosVector.setSafe(1, (Instant.now().toEpochMilli() - 1000) * 1000000);
+      timestampNanosVector.setSafe(2, (Instant.now().toEpochMilli() - 2000) * 1000000);
+
+      File dataFile = new File(TMP, "testRoundTripZoneAwareTimestamps.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableZoneAwareTimestamps() throws Exception {
+
+    // Field definitions
+    FieldType timestampMillisField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC"), null);
+    FieldType timestampMicrosField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC"), null);
+    FieldType timestampNanosField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC"), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeStampMilliTZVector timestampMillisVector =
+        new TimeStampMilliTZVector(
+            new Field("timestampMillis", timestampMillisField, null), allocator);
+    TimeStampMicroTZVector timestampMicrosVector =
+        new TimeStampMicroTZVector(
+            new Field("timestampMicros", timestampMicrosField, null), allocator);
+    TimeStampNanoTZVector timestampNanosVector =
+        new TimeStampNanoTZVector(
+            new Field("timestampNanos", timestampNanosField, null), allocator);
+
+    int rowCount = 3;
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timestampMillisVector, timestampMicrosVector, timestampNanosVector);
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timestampMillisVector.setNull(0);
+      timestampMillisVector.setSafe(1, 0);
+      timestampMillisVector.setSafe(2, (int) Instant.now().toEpochMilli());
+
+      timestampMicrosVector.setNull(0);
+      timestampMicrosVector.setSafe(1, 0);
+      timestampMicrosVector.setSafe(2, Instant.now().toEpochMilli() * 1000);
+
+      timestampNanosVector.setNull(0);
+      timestampNanosVector.setSafe(1, 0);
+      timestampNanosVector.setSafe(2, Instant.now().toEpochMilli() * 1000000);
+
+      File dataFile = new File(TMP, "testRoundTripNullableZoneAwareTimestamps.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripLocalTimestamps() throws Exception {
+
+    // Field definitions
+    FieldType timestampMillisField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.MILLISECOND, null), null);
+    FieldType timestampMicrosField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.MICROSECOND, null), null);
+    FieldType timestampNanosField =
+        new FieldType(false, new ArrowType.Timestamp(TimeUnit.NANOSECOND, null), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeStampMilliVector timestampMillisVector =
+        new TimeStampMilliVector(
+            new Field("timestampMillis", timestampMillisField, null), allocator);
+    TimeStampMicroVector timestampMicrosVector =
+        new TimeStampMicroVector(
+            new Field("timestampMicros", timestampMicrosField, null), allocator);
+    TimeStampNanoVector timestampNanosVector =
+        new TimeStampNanoVector(new Field("timestampNanos", timestampNanosField, null), allocator);
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timestampMillisVector, timestampMicrosVector, timestampNanosVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timestampMillisVector.setSafe(0, (int) Instant.now().toEpochMilli());
+      timestampMillisVector.setSafe(1, (int) Instant.now().toEpochMilli() - 1000);
+      timestampMillisVector.setSafe(2, (int) Instant.now().toEpochMilli() - 2000);
+
+      timestampMicrosVector.setSafe(0, Instant.now().toEpochMilli() * 1000);
+      timestampMicrosVector.setSafe(1, (Instant.now().toEpochMilli() - 1000) * 1000);
+      timestampMicrosVector.setSafe(2, (Instant.now().toEpochMilli() - 2000) * 1000);
+
+      timestampNanosVector.setSafe(0, Instant.now().toEpochMilli() * 1000000);
+      timestampNanosVector.setSafe(1, (Instant.now().toEpochMilli() - 1000) * 1000000);
+      timestampNanosVector.setSafe(2, (Instant.now().toEpochMilli() - 2000) * 1000000);
+
+      File dataFile = new File(TMP, "testRoundTripLocalTimestamps.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableLocalTimestamps() throws Exception {
+
+    // Field definitions
+    FieldType timestampMillisField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.MILLISECOND, null), null);
+    FieldType timestampMicrosField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.MICROSECOND, null), null);
+    FieldType timestampNanosField =
+        new FieldType(true, new ArrowType.Timestamp(TimeUnit.NANOSECOND, null), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    TimeStampMilliVector timestampMillisVector =
+        new TimeStampMilliVector(
+            new Field("timestampMillis", timestampMillisField, null), allocator);
+    TimeStampMicroVector timestampMicrosVector =
+        new TimeStampMicroVector(
+            new Field("timestampMicros", timestampMicrosField, null), allocator);
+    TimeStampNanoVector timestampNanosVector =
+        new TimeStampNanoVector(new Field("timestampNanos", timestampNanosField, null), allocator);
+
+    int rowCount = 3;
+
+    // Set up VSR
+    List<FieldVector> vectors =
+        Arrays.asList(timestampMillisVector, timestampMicrosVector, timestampNanosVector);
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      timestampMillisVector.setNull(0);
+      timestampMillisVector.setSafe(1, 0);
+      timestampMillisVector.setSafe(2, (int) Instant.now().toEpochMilli());
+
+      timestampMicrosVector.setNull(0);
+      timestampMicrosVector.setSafe(1, 0);
+      timestampMicrosVector.setSafe(2, Instant.now().toEpochMilli() * 1000);
+
+      timestampNanosVector.setNull(0);
+      timestampNanosVector.setSafe(1, 0);
+      timestampNanosVector.setSafe(2, Instant.now().toEpochMilli() * 1000000);
+
+      File dataFile = new File(TMP, "testRoundTripNullableLocalTimestamps.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
 }
