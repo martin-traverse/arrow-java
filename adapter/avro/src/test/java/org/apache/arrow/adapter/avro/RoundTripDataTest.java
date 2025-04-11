@@ -55,6 +55,11 @@ import org.apache.arrow.vector.TimeStampNanoVector;
 import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.complex.ListVector;
+import org.apache.arrow.vector.complex.MapVector;
+import org.apache.arrow.vector.complex.StructVector;
+import org.apache.arrow.vector.complex.writer.BaseWriter;
+import org.apache.arrow.vector.complex.writer.FieldWriter;
 import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
@@ -1067,6 +1072,539 @@ public class RoundTripDataTest {
       timestampNanosVector.setSafe(2, Instant.now().toEpochMilli() * 1000000);
 
       File dataFile = new File(TMP, "testRoundTripNullableLocalTimestamps.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  // Data round trip for containers of primitive and logical types, nullable and non-nullable
+
+  @Test
+  public void testRoundTripLists() throws Exception {
+
+    // Field definitions
+    FieldType intListField = new FieldType(false, new ArrowType.List(), null);
+    FieldType stringListField = new FieldType(false, new ArrowType.List(), null);
+    FieldType dateListField = new FieldType(false, new ArrowType.List(), null);
+
+    Field intField = new Field("item", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+    Field stringField = new Field("item", FieldType.notNullable(new ArrowType.Utf8()), null);
+    Field dateField =
+        new Field("item", FieldType.notNullable(new ArrowType.Date(DateUnit.DAY)), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    ListVector intListVector = new ListVector("intList", allocator, intListField, null);
+    ListVector stringListVector = new ListVector("stringList", allocator, stringListField, null);
+    ListVector dateListVector = new ListVector("dateList", allocator, dateListField, null);
+
+    intListVector.initializeChildrenFromFields(Arrays.asList(intField));
+    stringListVector.initializeChildrenFromFields(Arrays.asList(stringField));
+    dateListVector.initializeChildrenFromFields(Arrays.asList(dateField));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(intListVector, stringListVector, dateListVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      FieldWriter intListWriter = intListVector.getWriter();
+      FieldWriter stringListWriter = stringListVector.getWriter();
+      FieldWriter dateListWriter = dateListVector.getWriter();
+
+      // Set test data for intList
+      for (int i = 0; i < rowCount; i++) {
+        intListWriter.startList();
+        for (int j = 0; j < 5 - i; j++) {
+          intListWriter.writeInt(j);
+        }
+        intListWriter.endList();
+      }
+
+      // Set test data for stringList
+      for (int i = 0; i < rowCount; i++) {
+        stringListWriter.startList();
+        for (int j = 0; j < 5 - i; j++) {
+          stringListWriter.writeVarChar("string" + j);
+        }
+        stringListWriter.endList();
+      }
+
+      // Set test data for dateList
+      for (int i = 0; i < rowCount; i++) {
+        dateListWriter.startList();
+        for (int j = 0; j < 5 - i; j++) {
+          dateListWriter.writeDateDay((int) LocalDate.now().plusDays(j).toEpochDay());
+        }
+        dateListWriter.endList();
+      }
+
+      // Update count for the vectors
+      intListVector.setValueCount(rowCount);
+      stringListVector.setValueCount(rowCount);
+      dateListVector.setValueCount(rowCount);
+
+      File dataFile = new File(TMP, "testRoundTripLists.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableLists() throws Exception {
+
+    // Field definitions
+    FieldType nullListType = new FieldType(true, new ArrowType.List(), null);
+    FieldType nonNullListType = new FieldType(false, new ArrowType.List(), null);
+
+    Field nullFieldType = new Field("item", FieldType.nullable(new ArrowType.Int(32, true)), null);
+    Field nonNullFieldType =
+        new Field("item", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    ListVector nullEntriesVector =
+        new ListVector("nullEntriesVector", allocator, nonNullListType, null);
+    ListVector nullListVector = new ListVector("nullListVector", allocator, nullListType, null);
+    ListVector nullBothVector = new ListVector("nullBothVector", allocator, nullListType, null);
+
+    nullEntriesVector.initializeChildrenFromFields(Arrays.asList(nullFieldType));
+    nullListVector.initializeChildrenFromFields(Arrays.asList(nonNullFieldType));
+    nullBothVector.initializeChildrenFromFields(Arrays.asList(nullFieldType));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(nullEntriesVector, nullListVector, nullBothVector);
+    int rowCount = 4;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data for nullEntriesVector
+      FieldWriter nullEntriesWriter = nullEntriesVector.getWriter();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeNull();
+      nullEntriesWriter.integer().writeNull();
+      nullEntriesWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(0);
+      nullEntriesWriter.integer().writeInt(0);
+      nullEntriesWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(123);
+      nullEntriesWriter.integer().writeInt(456);
+      nullEntriesWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(789);
+      nullEntriesWriter.integer().writeInt(789);
+      nullEntriesWriter.endList();
+
+      // Set test data for nullListVector
+      FieldWriter nullListWriter = nullListVector.getWriter();
+      nullListWriter.writeNull();
+      nullListWriter.setPosition(1); // writeNull() does not inc. idx() on list vector
+      nullListWriter.startList();
+      nullListWriter.integer().writeInt(0);
+      nullListWriter.integer().writeInt(0);
+      nullListWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(123);
+      nullEntriesWriter.integer().writeInt(456);
+      nullEntriesWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(789);
+      nullEntriesWriter.integer().writeInt(789);
+      nullEntriesWriter.endList();
+
+      // Set test data for nullBothVector
+      FieldWriter nullBothWriter = nullBothVector.getWriter();
+      nullBothWriter.writeNull();
+      nullBothWriter.setPosition(1);
+      nullBothWriter.startList();
+      nullBothWriter.integer().writeNull();
+      nullBothWriter.integer().writeNull();
+      nullBothWriter.endList();
+      nullListWriter.startList();
+      nullListWriter.integer().writeInt(0);
+      nullListWriter.integer().writeInt(0);
+      nullListWriter.endList();
+      nullEntriesWriter.startList();
+      nullEntriesWriter.integer().writeInt(123);
+      nullEntriesWriter.integer().writeInt(456);
+      nullEntriesWriter.endList();
+
+      // Update count for the vectors
+      nullListVector.setValueCount(4);
+      nullEntriesVector.setValueCount(4);
+      nullBothVector.setValueCount(4);
+
+      File dataFile = new File(TMP, "testRoundTripNullableLists.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+
+  @Test
+  public void testRoundTripMap() throws Exception {
+
+    // Field definitions
+    FieldType intMapField = new FieldType(false, new ArrowType.Map(false), null);
+    FieldType stringMapField = new FieldType(false, new ArrowType.Map(false), null);
+    FieldType dateMapField = new FieldType(false, new ArrowType.Map(false), null);
+
+    Field keyField = new Field("key", FieldType.notNullable(new ArrowType.Utf8()), null);
+    Field intField = new Field("value", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+    Field stringField = new Field("value", FieldType.notNullable(new ArrowType.Utf8()), null);
+    Field dateField =
+        new Field("value", FieldType.notNullable(new ArrowType.Date(DateUnit.DAY)), null);
+
+    Field intEntryField =
+        new Field(
+            "entries",
+            FieldType.notNullable(new ArrowType.Struct()),
+            Arrays.asList(keyField, intField));
+    Field stringEntryField =
+        new Field(
+            "entries",
+            FieldType.notNullable(new ArrowType.Struct()),
+            Arrays.asList(keyField, stringField));
+    Field dateEntryField =
+        new Field(
+            "entries",
+            FieldType.notNullable(new ArrowType.Struct()),
+            Arrays.asList(keyField, dateField));
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    MapVector intMapVector = new MapVector("intMap", allocator, intMapField, null);
+    MapVector stringMapVector = new MapVector("stringMap", allocator, stringMapField, null);
+    MapVector dateMapVector = new MapVector("dateMap", allocator, dateMapField, null);
+
+    intMapVector.initializeChildrenFromFields(Arrays.asList(intEntryField));
+    stringMapVector.initializeChildrenFromFields(Arrays.asList(stringEntryField));
+    dateMapVector.initializeChildrenFromFields(Arrays.asList(dateEntryField));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(intMapVector, stringMapVector, dateMapVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Total number of entries that will be writen to each vector
+      int entryCount = 5 + 4 + 3;
+
+      // Set test data for intList
+      BaseWriter.MapWriter writer = intMapVector.getWriter();
+      for (int i = 0; i < rowCount; i++) {
+        writer.startMap();
+        for (int j = 0; j < 5 - i; j++) {
+          writer.startEntry();
+          writer.key().varChar().writeVarChar("key" + j);
+          writer.value().integer().writeInt(j);
+          writer.endEntry();
+        }
+        writer.endMap();
+      }
+
+      // Update count for data vector (map writer does not do this)
+      intMapVector.getDataVector().setValueCount(entryCount);
+
+      // Set test data for stringList
+      BaseWriter.MapWriter stringWriter = stringMapVector.getWriter();
+      for (int i = 0; i < rowCount; i++) {
+        stringWriter.startMap();
+        for (int j = 0; j < 5 - i; j++) {
+          stringWriter.startEntry();
+          stringWriter.key().varChar().writeVarChar("key" + j);
+          stringWriter.value().varChar().writeVarChar("string" + j);
+          stringWriter.endEntry();
+        }
+        stringWriter.endMap();
+      }
+
+      // Update count for the vectors
+      intMapVector.setValueCount(rowCount);
+      stringMapVector.setValueCount(rowCount);
+      dateMapVector.setValueCount(rowCount);
+
+      // Update count for data vector (map writer does not do this)
+      stringMapVector.getDataVector().setValueCount(entryCount);
+
+      // Set test data for dateList
+      BaseWriter.MapWriter dateWriter = dateMapVector.getWriter();
+      for (int i = 0; i < rowCount; i++) {
+        dateWriter.startMap();
+        for (int j = 0; j < 5 - i; j++) {
+          dateWriter.startEntry();
+          dateWriter.key().varChar().writeVarChar("key" + j);
+          dateWriter.value().dateDay().writeDateDay((int) LocalDate.now().plusDays(j).toEpochDay());
+          dateWriter.endEntry();
+        }
+        dateWriter.endMap();
+      }
+
+      // Update count for data vector (map writer does not do this)
+      dateMapVector.getDataVector().setValueCount(entryCount);
+
+      File dataFile = new File(TMP, "testRoundTripMap.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableMap() throws Exception {
+
+    // Field definitions
+    FieldType nullMapType = new FieldType(true, new ArrowType.Map(false), null);
+    FieldType nonNullMapType = new FieldType(false, new ArrowType.Map(false), null);
+
+    Field keyField = new Field("key", FieldType.notNullable(new ArrowType.Utf8()), null);
+    Field nullFieldType = new Field("value", FieldType.nullable(new ArrowType.Int(32, true)), null);
+    Field nonNullFieldType =
+        new Field("value", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+    Field nullEntryField =
+        new Field(
+            "entries",
+            FieldType.notNullable(new ArrowType.Struct()),
+            Arrays.asList(keyField, nullFieldType));
+    Field nonNullEntryField =
+        new Field(
+            "entries",
+            FieldType.notNullable(new ArrowType.Struct()),
+            Arrays.asList(keyField, nonNullFieldType));
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    MapVector nullEntriesVector =
+        new MapVector("nullEntriesVector", allocator, nonNullMapType, null);
+    MapVector nullMapVector = new MapVector("nullMapVector", allocator, nullMapType, null);
+    MapVector nullBothVector = new MapVector("nullBothVector", allocator, nullMapType, null);
+
+    nullEntriesVector.initializeChildrenFromFields(Arrays.asList(nullEntryField));
+    nullMapVector.initializeChildrenFromFields(Arrays.asList(nonNullEntryField));
+    nullBothVector.initializeChildrenFromFields(Arrays.asList(nullEntryField));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(nullEntriesVector, nullMapVector, nullBothVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data for intList
+      BaseWriter.MapWriter writer = nullEntriesVector.getWriter();
+      writer.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key0");
+      writer.value().integer().writeNull();
+      writer.endEntry();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key1");
+      writer.value().integer().writeNull();
+      writer.endEntry();
+      writer.endMap();
+      writer.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key2");
+      writer.value().integer().writeInt(0);
+      writer.endEntry();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key3");
+      writer.value().integer().writeInt(0);
+      writer.endEntry();
+      writer.endMap();
+      writer.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key4");
+      writer.value().integer().writeInt(123);
+      writer.endEntry();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key5");
+      writer.value().integer().writeInt(456);
+      writer.endEntry();
+      writer.endMap();
+
+      // Set test data for stringList
+      BaseWriter.MapWriter nullMapWriter = nullMapVector.getWriter();
+      nullMapWriter.writeNull();
+      nullMapWriter.setPosition(1); // writeNull() does not inc. idx() on map (list) vector
+      nullMapWriter.startMap();
+      nullMapWriter.startEntry();
+      nullMapWriter.key().varChar().writeVarChar("key2");
+      nullMapWriter.value().integer().writeInt(0);
+      nullMapWriter.endEntry();
+      writer.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key3");
+      writer.value().integer().writeInt(0);
+      writer.endEntry();
+      nullMapWriter.endMap();
+      nullMapWriter.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key4");
+      writer.value().integer().writeInt(123);
+      writer.endEntry();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key5");
+      writer.value().integer().writeInt(456);
+      writer.endEntry();
+      nullMapWriter.endMap();
+
+      // Set test data for dateList
+      BaseWriter.MapWriter nullBothWriter = nullBothVector.getWriter();
+      nullBothWriter.writeNull();
+      nullBothWriter.setPosition(1);
+      nullBothWriter.startMap();
+      nullBothWriter.startEntry();
+      nullBothWriter.key().varChar().writeVarChar("key2");
+      nullBothWriter.value().integer().writeNull();
+      nullBothWriter.endEntry();
+      nullBothWriter.startEntry();
+      nullBothWriter.key().varChar().writeVarChar("key3");
+      nullBothWriter.value().integer().writeNull();
+      nullBothWriter.endEntry();
+      nullBothWriter.endMap();
+      nullBothWriter.startMap();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key4");
+      writer.value().integer().writeInt(123);
+      writer.endEntry();
+      writer.startEntry();
+      writer.key().varChar().writeVarChar("key5");
+      writer.value().integer().writeInt(456);
+      writer.endEntry();
+      nullBothWriter.endMap();
+
+      // Update count for the vectors
+      nullEntriesVector.setValueCount(3);
+      nullMapVector.setValueCount(3);
+      nullBothVector.setValueCount(3);
+
+      File dataFile = new File(TMP, "testRoundTripNullableMap.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+
+  @Test
+  public void testRoundTripStruct() throws Exception {
+
+    // Field definitions
+    FieldType structFieldType = new FieldType(false, new ArrowType.Struct(), null);
+    Field intField =
+        new Field("intField", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+    Field stringField = new Field("stringField", FieldType.notNullable(new ArrowType.Utf8()), null);
+    Field dateField =
+        new Field("dateField", FieldType.notNullable(new ArrowType.Date(DateUnit.DAY)), null);
+
+    // Create empty vector
+    BufferAllocator allocator = new RootAllocator();
+    StructVector structVector = new StructVector("struct", allocator, structFieldType, null);
+    structVector.initializeChildrenFromFields(Arrays.asList(intField, stringField, dateField));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(structVector);
+    int rowCount = 3;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data
+      BaseWriter.StructWriter structWriter = structVector.getWriter();
+
+      for (int i = 0; i < rowCount; i++) {
+        structWriter.start();
+        structWriter.integer("intField").writeInt(i);
+        structWriter.varChar("stringField").writeVarChar("string" + i);
+        structWriter.dateDay("dateField").writeDateDay((int) LocalDate.now().toEpochDay() + i);
+        structWriter.end();
+      }
+
+      File dataFile = new File(TMP, "testRoundTripStruct.avro");
+
+      roundTripTest(root, allocator, dataFile, rowCount);
+    }
+  }
+
+  @Test
+  public void testRoundTripNullableStructs() throws Exception {
+
+    // Field definitions
+    FieldType structFieldType = new FieldType(false, new ArrowType.Struct(), null);
+    FieldType nullableStructFieldType = new FieldType(true, new ArrowType.Struct(), null);
+    Field intField =
+        new Field("intField", FieldType.notNullable(new ArrowType.Int(32, true)), null);
+    Field nullableIntField =
+        new Field("nullableIntField", FieldType.nullable(new ArrowType.Int(32, true)), null);
+
+    // Create empty vectors
+    BufferAllocator allocator = new RootAllocator();
+    StructVector structVector = new StructVector("struct", allocator, structFieldType, null);
+    StructVector nullableStructVector =
+        new StructVector("nullableStruct", allocator, nullableStructFieldType, null);
+    structVector.initializeChildrenFromFields(Arrays.asList(intField, nullableIntField));
+    nullableStructVector.initializeChildrenFromFields(Arrays.asList(intField, nullableIntField));
+
+    // Set up VSR
+    List<FieldVector> vectors = Arrays.asList(structVector, nullableStructVector);
+    int rowCount = 4;
+
+    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
+
+      root.setRowCount(rowCount);
+      root.allocateNew();
+
+      // Set test data for structVector
+      BaseWriter.StructWriter structWriter = structVector.getWriter();
+      for (int i = 0; i < rowCount; i++) {
+        structWriter.setPosition(i);
+        structWriter.start();
+        structWriter.integer("intField").writeInt(i);
+        if (i % 2 == 0) {
+          structWriter.integer("nullableIntField").writeInt(i * 10);
+        } else {
+          structWriter.integer("nullableIntField").writeNull();
+        }
+        structWriter.end();
+      }
+
+      // Set test data for nullableStructVector
+      BaseWriter.StructWriter nullableStructWriter = nullableStructVector.getWriter();
+      for (int i = 0; i < rowCount; i++) {
+        nullableStructWriter.setPosition(i);
+        if (i >= 2) {
+          nullableStructWriter.start();
+          nullableStructWriter.integer("intField").writeInt(i);
+          if (i % 2 == 0) {
+            nullableStructWriter.integer("nullableIntField").writeInt(i * 10);
+          } else {
+            nullableStructWriter.integer("nullableIntField").writeNull();
+          }
+          nullableStructWriter.end();
+        } else {
+          nullableStructWriter.writeNull();
+        }
+      }
+
+      // Update count for the vector
+      structVector.setValueCount(rowCount);
+      nullableStructVector.setValueCount(rowCount);
+
+      File dataFile = new File(TMP, "testRoundTripNullableStructs.avro");
 
       roundTripTest(root, allocator, dataFile, rowCount);
     }
