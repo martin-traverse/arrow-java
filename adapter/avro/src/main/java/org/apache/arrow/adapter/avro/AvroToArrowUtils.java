@@ -859,9 +859,18 @@ public class AvroToArrowUtils {
     return root;
   }
 
+  // Do not include props that are part of the Avro format itself as field metadata
+  // These are already represented in the field / type structure and are not custom attributes
+  private static final List<String> AVRO_FORMAT_METADATA = Arrays.asList(
+      "logicalType", "precision", "scale");
+
   private static Map<String, String> getMetaData(Schema schema) {
     Map<String, String> metadata = new HashMap<>();
-    schema.getObjectProps().forEach((k, v) -> metadata.put(k, v.toString()));
+    for (Map.Entry<String, Object> prop : schema.getObjectProps().entrySet()) {
+      if (!AVRO_FORMAT_METADATA.contains(prop.getKey())) {
+        metadata.put(prop.getKey(), prop.getValue().toString());
+      }
+    }
     return metadata;
   }
 
@@ -881,7 +890,7 @@ public class AvroToArrowUtils {
     if (doc != null) {
       extProps.put("doc", doc);
     }
-    if (aliases != null) {
+    if (aliases != null && !aliases.isEmpty()) {
       extProps.put("aliases", convertAliases(aliases));
     }
     return extProps;
