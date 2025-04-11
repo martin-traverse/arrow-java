@@ -313,7 +313,7 @@ public class AvroToArrowUtils {
       case NULL:
         arrowType = new ArrowType.Null();
         fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
-        vector = fieldType.createNewSingleVector(name, allocator, /* schemaCallBack= */ null);
+        vector = new NullVector(name, fieldType); // Respect nullability defined in fieldType
         consumer = new AvroNullConsumer((NullVector) vector);
         break;
       default:
