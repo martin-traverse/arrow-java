@@ -51,6 +51,7 @@ import org.apache.arrow.adapter.avro.consumers.SkipConsumer;
 import org.apache.arrow.adapter.avro.consumers.SkipFunction;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroDateConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimalConsumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimal256Consumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMicroConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMillisConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMicrosConsumer;
@@ -62,6 +63,7 @@ import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.DateDayVector;
 import org.apache.arrow.vector.DecimalVector;
+import org.apache.arrow.vector.Decimal256Vector;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.FixedSizeBinaryVector;
 import org.apache.arrow.vector.Float4Vector;
@@ -208,10 +210,11 @@ public class AvroToArrowUtils {
               new FieldType(
                   nullable, arrowType, /* dictionary= */ null, getMetaData(schema, extProps));
           vector = createVector(consumerVector, fieldType, name, allocator);
-          // TODO: Decimal 256
-          consumer =
-              new AvroDecimalConsumer.FixedDecimalConsumer(
-                  (DecimalVector) vector, schema.getFixedSize());
+          if (schema.getFixedSize() <= 16) {
+            consumer = new AvroDecimalConsumer.FixedDecimalConsumer((DecimalVector) vector, schema.getFixedSize());
+          } else {
+            consumer = new AvroDecimal256Consumer.FixedDecimal256Consumer((Decimal256Vector) vector, schema.getFixedSize());
+          }
         } else {
           arrowType = new ArrowType.FixedSizeBinary(schema.getFixedSize());
           fieldType =
@@ -289,12 +292,16 @@ public class AvroToArrowUtils {
         break;
       case BYTES:
         if (logicalType instanceof LogicalTypes.Decimal) {
-          arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
+          LogicalTypes.Decimal decimalType = (LogicalTypes.Decimal) logicalType;
+          arrowType = createDecimalArrowType(decimalType, schema);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
           vector = createVector(consumerVector, fieldType, name, allocator);
-          // TODO: Decimal 256
-          consumer = new AvroDecimalConsumer.BytesDecimalConsumer((DecimalVector) vector);
+          if (decimalType.getPrecision() <= 38) {
+            consumer = new AvroDecimalConsumer.BytesDecimalConsumer((DecimalVector) vector);
+          } else {
+            consumer = new AvroDecimal256Consumer.BytesDecimal256Consumer((Decimal256Vector) vector);
+          }
         } else {
           arrowType = new ArrowType.Binary();
           fieldType =
