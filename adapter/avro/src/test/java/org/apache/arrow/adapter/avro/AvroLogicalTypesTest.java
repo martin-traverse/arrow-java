@@ -37,8 +37,63 @@ import org.junit.jupiter.api.Test;
 public class AvroLogicalTypesTest extends AvroTestBase {
 
   @Test
+  public void testTimestampMillis() throws Exception {
+
+    Schema schema = getSchema("logical/test_timestamp_millis.avsc");
+    List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
+
+    VectorSchemaRoot root = writeAndRead(schema, data);
+    FieldVector vector = root.getFieldVectors().get(0);
+
+    checkPrimitiveResult(data, vector);
+  }
+
+  @Test
   public void testTimestampMicros() throws Exception {
+
     Schema schema = getSchema("logical/test_timestamp_micros.avsc");
+    List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
+
+    VectorSchemaRoot root = writeAndRead(schema, data);
+    FieldVector vector = root.getFieldVectors().get(0);
+
+    checkPrimitiveResult(data, vector);
+  }
+
+  @Test
+  public void testTimestampNanos() throws Exception {
+
+    Schema schema = getSchema("logical/test_timestamp_nanos.avsc");
+    List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
+
+    VectorSchemaRoot root = writeAndRead(schema, data);
+    FieldVector vector = root.getFieldVectors().get(0);
+
+    checkPrimitiveResult(data, vector);
+  }
+
+  @Test
+  public void testLocalTimestampMillis() throws Exception {
+    Schema schema = getSchema("logical/test_local_timestamp_millis.avsc");
+
+    List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
+    List<LocalDateTime> expected =
+        Arrays.asList(
+            DateUtility.getLocalDateTimeFromEpochMilli(10000),
+            DateUtility.getLocalDateTimeFromEpochMilli(20000),
+            DateUtility.getLocalDateTimeFromEpochMilli(30000),
+            DateUtility.getLocalDateTimeFromEpochMilli(40000),
+            DateUtility.getLocalDateTimeFromEpochMilli(50000));
+
+    VectorSchemaRoot root = writeAndRead(schema, data);
+    FieldVector vector = root.getFieldVectors().get(0);
+
+    checkPrimitiveResult(expected, vector);
+  }
+
+  @Test
+  public void testLocalTimestampMicros() throws Exception {
+    Schema schema = getSchema("logical/test_local_timestamp_micros.avsc");
 
     List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
     List<LocalDateTime> expected =
@@ -56,17 +111,17 @@ public class AvroLogicalTypesTest extends AvroTestBase {
   }
 
   @Test
-  public void testTimestampMillis() throws Exception {
-    Schema schema = getSchema("logical/test_timestamp_millis.avsc");
+  public void testLocalTimestampNanos() throws Exception {
+    Schema schema = getSchema("logical/test_local_timestamp_nanos.avsc");
 
     List<Long> data = Arrays.asList(10000L, 20000L, 30000L, 40000L, 50000L);
     List<LocalDateTime> expected =
         Arrays.asList(
-            DateUtility.getLocalDateTimeFromEpochMilli(10000),
-            DateUtility.getLocalDateTimeFromEpochMilli(20000),
-            DateUtility.getLocalDateTimeFromEpochMilli(30000),
-            DateUtility.getLocalDateTimeFromEpochMilli(40000),
-            DateUtility.getLocalDateTimeFromEpochMilli(50000));
+            DateUtility.getLocalDateTimeFromEpochNano(10000),
+            DateUtility.getLocalDateTimeFromEpochNano(20000),
+            DateUtility.getLocalDateTimeFromEpochNano(30000),
+            DateUtility.getLocalDateTimeFromEpochNano(40000),
+            DateUtility.getLocalDateTimeFromEpochNano(50000));
 
     VectorSchemaRoot root = writeAndRead(schema, data);
     FieldVector vector = root.getFieldVectors().get(0);
