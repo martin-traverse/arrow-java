@@ -55,7 +55,11 @@ import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimal256Consumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMicroConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMillisConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMicrosConsumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMicrosTzConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMillisConsumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMillisTzConsumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampNanosConsumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampNanosTzConsumer;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.util.Preconditions;
 import org.apache.arrow.vector.BaseIntVector;
@@ -72,8 +76,12 @@ import org.apache.arrow.vector.IntVector;
 import org.apache.arrow.vector.NullVector;
 import org.apache.arrow.vector.TimeMicroVector;
 import org.apache.arrow.vector.TimeMilliVector;
+import org.apache.arrow.vector.TimeStampMicroTZVector;
 import org.apache.arrow.vector.TimeStampMicroVector;
+import org.apache.arrow.vector.TimeStampMilliTZVector;
 import org.apache.arrow.vector.TimeStampMilliVector;
+import org.apache.arrow.vector.TimeStampNanoTZVector;
+import org.apache.arrow.vector.TimeStampNanoVector;
 import org.apache.arrow.vector.VarBinaryVector;
 import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -259,17 +267,41 @@ public class AvroToArrowUtils {
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimeMicroConsumer((TimeMicroVector) vector);
         } else if (logicalType instanceof LogicalTypes.TimestampMillis) {
+          arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC");
+          fieldType =
+              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
+          vector = createVector(consumerVector, fieldType, name, allocator);
+          consumer = new AvroTimestampMillisTzConsumer((TimeStampMilliTZVector) vector);
+        } else if (logicalType instanceof LogicalTypes.TimestampMicros) {
+          arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
+          fieldType =
+              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
+          vector = createVector(consumerVector, fieldType, name, allocator);
+          consumer = new AvroTimestampMicrosTzConsumer((TimeStampMicroTZVector) vector);
+        } else if (logicalType instanceof LogicalTypes.TimestampNanos) {
+          arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC");
+          fieldType =
+              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
+          vector = createVector(consumerVector, fieldType, name, allocator);
+          consumer = new AvroTimestampNanosTzConsumer((TimeStampNanoTZVector) vector);
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMillisConsumer((TimeStampMilliVector) vector);
-        } else if (logicalType instanceof LogicalTypes.TimestampMicros) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMicrosConsumer((TimeStampMicroVector) vector);
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos) {
+          arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
+          fieldType =
+              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema));
+          vector = createVector(consumerVector, fieldType, name, allocator);
+          consumer = new AvroTimestampNanosConsumer((TimeStampNanoVector) vector);
         } else {
           arrowType = new ArrowType.Int(64, /* isSigned= */ true);
           fieldType =
