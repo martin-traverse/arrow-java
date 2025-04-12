@@ -193,10 +193,10 @@ public class AvroToArrowUtils {
         }
         break;
       case ARRAY:
-        consumer = createArrayConsumer(schema, name, config, consumerVector);
+        consumer = createArrayConsumer(schema, name, nullable, config, consumerVector);
         break;
       case MAP:
-        consumer = createMapConsumer(schema, name, config, consumerVector);
+        consumer = createMapConsumer(schema, name, nullable, config, consumerVector);
         break;
       case RECORD:
         consumer = createStructConsumer(schema, name, config, consumerVector);
@@ -529,11 +529,16 @@ public class AvroToArrowUtils {
   }
 
   private static Field avroSchemaToField(Schema schema, String name, AvroToArrowConfig config) {
-    return avroSchemaToField(schema, name, config, null);
+    return avroSchemaToField(schema, name, false, config, null);
   }
 
   private static Field avroSchemaToField(
       Schema schema, String name, AvroToArrowConfig config, Map<String, String> externalProps) {
+    return avroSchemaToField(schema, name, false, config, externalProps);
+  }
+
+  private static Field avroSchemaToField(
+      Schema schema, String name, boolean nullable, AvroToArrowConfig config, Map<String, String> externalProps) {
 
     final Schema.Type type = schema.getType();
     final LogicalType logicalType = schema.getLogicalType();
@@ -543,15 +548,15 @@ public class AvroToArrowUtils {
     switch (type) {
       case UNION:
         boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
+        // For a simple nullable (null | type), just call avroSchemaToField on the child with nullable = true
         if (config.isHandleNullable() && schema.getTypes().size() == 2 && nullableUnion) {
           Schema childSchema = schema.getTypes().get(0).getType() == Schema.Type.NULL
               ? schema.getTypes().get(1)
               : schema.getTypes().get(0);
-          Field childField = avroSchemaToField(childSchema, name, config, externalProps);
-          fieldType = createFieldType(true, childField.getType(), childSchema, externalProps, null);
-          children.addAll(childField.getChildren());
+          return avroSchemaToField(childSchema, name, true, config, externalProps);
         }
         else {
+          // TODO: Add null type to union if any children are nullable
           for (int i = 0; i < schema.getTypes().size(); i++) {
             Schema childSchema = schema.getTypes().get(i);
             // Union child vector should use default name
@@ -564,7 +569,7 @@ public class AvroToArrowUtils {
       case ARRAY:
         Schema elementSchema = schema.getElementType();
         children.add(avroSchemaToField(elementSchema, ListVector.DATA_VECTOR_NAME, config));
-        fieldType = createFieldType(new ArrowType.List(), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.List(), schema, externalProps);
         break;
       case MAP:
         // MapVector internal struct field and key field should be non-nullable
@@ -579,7 +584,7 @@ public class AvroToArrowUtils {
             new Field(MapVector.DATA_VECTOR_NAME, structFieldType, Arrays.asList(keyField, valueField));
         children.add(structField);
         fieldType =
-            createFieldType(new ArrowType.Map(/* keysSorted= */ false), schema, externalProps);
+            createFieldType(nullable, new ArrowType.Map(/* keysSorted= */ false), schema, externalProps);
         break;
       case RECORD:
         final Set<String> skipFieldNames = config.getSkipFieldNames();
@@ -600,7 +605,7 @@ public class AvroToArrowUtils {
             children.add(avroSchemaToField(childSchema, fullChildName, config, extProps));
           }
         }
-        fieldType = createFieldType(new ArrowType.Struct(), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.Struct(), schema, externalProps);
         break;
       case ENUM:
         DictionaryProvider.MapDictionaryProvider provider = config.getProvider();
@@ -610,6 +615,7 @@ public class AvroToArrowUtils {
 
         fieldType =
             createFieldType(
+                nullable,
                 indexType,
                 schema,
                 externalProps,
@@ -617,7 +623,7 @@ public class AvroToArrowUtils {
         break;
 
       case STRING:
-        fieldType = createFieldType(new ArrowType.Utf8(), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.Utf8(), schema, externalProps);
         break;
       case FIXED:
         final ArrowType fixedArrowType;
@@ -626,7 +632,7 @@ public class AvroToArrowUtils {
         } else {
           fixedArrowType = new ArrowType.FixedSizeBinary(schema.getFixedSize());
         }
-        fieldType = createFieldType(fixedArrowType, schema, externalProps);
+        fieldType = createFieldType(nullable, fixedArrowType, schema, externalProps);
         break;
       case INT:
         final ArrowType intArrowType;
@@ -637,10 +643,10 @@ public class AvroToArrowUtils {
         } else {
           intArrowType = new ArrowType.Int(32, /* isSigned= */ true);
         }
-        fieldType = createFieldType(intArrowType, schema, externalProps);
+        fieldType = createFieldType(nullable, intArrowType, schema, externalProps);
         break;
       case BOOLEAN:
-        fieldType = createFieldType(new ArrowType.Bool(), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.Bool(), schema, externalProps);
         break;
       case LONG:
         final ArrowType longArrowType;
@@ -661,13 +667,13 @@ public class AvroToArrowUtils {
         } else {
           longArrowType = new ArrowType.Int(64, /* isSigned= */ true);
         }
-        fieldType = createFieldType(longArrowType, schema, externalProps);
+        fieldType = createFieldType(nullable, longArrowType, schema, externalProps);
         break;
       case FLOAT:
-        fieldType = createFieldType(new ArrowType.FloatingPoint(SINGLE), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.FloatingPoint(SINGLE), schema, externalProps);
         break;
       case DOUBLE:
-        fieldType = createFieldType(new ArrowType.FloatingPoint(DOUBLE), schema, externalProps);
+        fieldType = createFieldType(nullable, new ArrowType.FloatingPoint(DOUBLE), schema, externalProps);
         break;
       case BYTES:
         final ArrowType bytesArrowType;
@@ -676,7 +682,7 @@ public class AvroToArrowUtils {
         } else {
           bytesArrowType = new ArrowType.Binary();
         }
-        fieldType = createFieldType(bytesArrowType, schema, externalProps);
+        fieldType = createFieldType(nullable, bytesArrowType, schema, externalProps);
         break;
       case NULL:
         fieldType = createFieldType(ArrowType.Null.INSTANCE, schema, externalProps);
@@ -693,11 +699,11 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createArrayConsumer(
-      Schema schema, String name, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
 
     ListVector listVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, config);
+      final Field field = avroSchemaToField(schema, name, nullable, config, /* externalProps = */ null);
       listVector = (ListVector) field.createVector(config.getAllocator());
     } else {
       listVector = (ListVector) consumerVector;
@@ -774,11 +780,11 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createMapConsumer(
-      Schema schema, String name, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
 
     MapVector mapVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, config);
+      final Field field = avroSchemaToField(schema, name, nullable, config, /* externalProps = */ null);
       mapVector = (MapVector) field.createVector(config.getAllocator());
     } else {
       mapVector = (MapVector) consumerVector;
@@ -931,6 +937,11 @@ public class AvroToArrowUtils {
   private static FieldType createFieldType(
       ArrowType arrowType, Schema schema, Map<String, String> externalProps) {
     return createFieldType(arrowType, schema, externalProps, /* dictionary= */ null);
+  }
+
+  private static FieldType createFieldType(
+      boolean nullable, ArrowType arrowType, Schema schema, Map<String, String> externalProps) {
+    return createFieldType(nullable, arrowType, schema, externalProps, /* dictionary= */ null);
   }
 
   private static FieldType createFieldType(
