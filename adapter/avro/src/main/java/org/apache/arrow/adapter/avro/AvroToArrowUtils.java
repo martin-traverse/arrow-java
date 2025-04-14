@@ -199,7 +199,7 @@ public class AvroToArrowUtils {
         consumer = createMapConsumer(schema, name, nullable, config, consumerVector);
         break;
       case RECORD:
-        consumer = createStructConsumer(schema, name, config, consumerVector);
+        consumer = createStructConsumer(schema, name, nullable, config, consumerVector);
         break;
       case ENUM:
         consumer = createEnumConsumer(schema, name, config, consumerVector);
@@ -599,7 +599,7 @@ public class AvroToArrowUtils {
             if (doc != null) {
               extProps.put("doc", doc);
             }
-            if (aliases != null) {
+            if (aliases != null && !aliases.isEmpty()) {
               extProps.put("aliases", convertAliases(aliases));
             }
             children.add(avroSchemaToField(childSchema, fullChildName, config, extProps));
@@ -695,6 +695,10 @@ public class AvroToArrowUtils {
     if (name == null) {
       name = getDefaultFieldName(fieldType.getType());
     }
+    if (name.contains(".")) {
+      // Do not include namespace as part of the field name
+      name = name.substring(name.lastIndexOf(".") + 1);
+    }
     return new Field(name, fieldType, children.size() == 0 ? null : children);
   }
 
@@ -719,13 +723,13 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createStructConsumer(
-      Schema schema, String name, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
 
     final Set<String> skipFieldNames = config.getSkipFieldNames();
 
     StructVector structVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, config, createExternalProps(schema));
+      final Field field = avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
       structVector = (StructVector) field.createVector(config.getAllocator());
     } else {
       structVector = (StructVector) consumerVector;
