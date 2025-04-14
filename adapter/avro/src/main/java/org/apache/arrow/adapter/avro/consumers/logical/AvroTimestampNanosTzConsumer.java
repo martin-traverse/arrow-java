@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.arrow.adapter.avro.consumers.logical;
 
+import java.io.IOException;
 import org.apache.arrow.adapter.avro.consumers.BaseAvroConsumer;
 import org.apache.arrow.vector.TimeStampNanoTZVector;
 import org.apache.avro.io.Decoder;
-
-import java.io.IOException;
 
 /**
  * Consumer which consume timestamp-nanos values from avro decoder. Write the data to {@link

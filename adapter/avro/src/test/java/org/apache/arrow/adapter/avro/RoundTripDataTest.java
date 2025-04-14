@@ -16,8 +16,8 @@
  */
 package org.apache.arrow.adapter.avro;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,16 +36,16 @@ import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.DateDayVector;
-import org.apache.arrow.vector.DecimalVector;
 import org.apache.arrow.vector.Decimal256Vector;
+import org.apache.arrow.vector.DecimalVector;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.FixedSizeBinaryVector;
 import org.apache.arrow.vector.Float4Vector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.IntVector;
 import org.apache.arrow.vector.NullVector;
-import org.apache.arrow.vector.TimeMilliVector;
 import org.apache.arrow.vector.TimeMicroVector;
+import org.apache.arrow.vector.TimeMilliVector;
 import org.apache.arrow.vector.TimeStampMicroTZVector;
 import org.apache.arrow.vector.TimeStampMicroVector;
 import org.apache.arrow.vector.TimeStampMilliTZVector;
@@ -780,7 +780,6 @@ public class RoundTripDataTest {
     }
   }
 
-
   @Test
   public void testRoundTripTimes() throws Exception {
 
@@ -798,8 +797,7 @@ public class RoundTripDataTest {
         new TimeMicroVector(new Field("timeMicros", timeMicrosField, null), allocator);
 
     // Set up VSR
-    List<FieldVector> vectors =
-        Arrays.asList(timeMillisVector, timeMicrosVector);
+    List<FieldVector> vectors = Arrays.asList(timeMillisVector, timeMicrosVector);
     int rowCount = 3;
 
     try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
@@ -844,8 +842,7 @@ public class RoundTripDataTest {
     int rowCount = 3;
 
     // Set up VSR
-    List<FieldVector> vectors =
-        Arrays.asList(timeMillisVector, timeMicrosVector);
+    List<FieldVector> vectors = Arrays.asList(timeMillisVector, timeMicrosVector);
 
     try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
 
@@ -867,7 +864,6 @@ public class RoundTripDataTest {
       roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
-
 
   @Test
   public void testRoundTripZoneAwareTimestamps() throws Exception {
@@ -1248,7 +1244,6 @@ public class RoundTripDataTest {
     }
   }
 
-
   @Test
   public void testRoundTripMap() throws Exception {
 
@@ -1496,7 +1491,6 @@ public class RoundTripDataTest {
       roundTripTest(root, allocator, dataFile, rowCount);
     }
   }
-
 
   @Test
   public void testRoundTripStruct() throws Exception {

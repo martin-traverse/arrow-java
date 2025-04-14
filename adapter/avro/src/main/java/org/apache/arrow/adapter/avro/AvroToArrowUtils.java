@@ -40,8 +40,8 @@ import org.apache.arrow.adapter.avro.consumers.AvroFloatConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroIntConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroLongConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroMapConsumer;
-import org.apache.arrow.adapter.avro.consumers.AvroNullableConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroNullConsumer;
+import org.apache.arrow.adapter.avro.consumers.AvroNullableConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroStringConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroStructConsumer;
 import org.apache.arrow.adapter.avro.consumers.AvroUnionsConsumer;
@@ -50,8 +50,8 @@ import org.apache.arrow.adapter.avro.consumers.Consumer;
 import org.apache.arrow.adapter.avro.consumers.SkipConsumer;
 import org.apache.arrow.adapter.avro.consumers.SkipFunction;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroDateConsumer;
-import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimalConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimal256Consumer;
+import org.apache.arrow.adapter.avro.consumers.logical.AvroDecimalConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMicroConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimeMillisConsumer;
 import org.apache.arrow.adapter.avro.consumers.logical.AvroTimestampMicrosConsumer;
@@ -66,8 +66,8 @@ import org.apache.arrow.vector.BaseIntVector;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.DateDayVector;
-import org.apache.arrow.vector.DecimalVector;
 import org.apache.arrow.vector.Decimal256Vector;
+import org.apache.arrow.vector.DecimalVector;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.FixedSizeBinaryVector;
 import org.apache.arrow.vector.Float4Vector;
@@ -180,17 +180,19 @@ public class AvroToArrowUtils {
 
     switch (type) {
       case UNION:
-        boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
+        boolean nullableUnion =
+            schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
         if (schema.getTypes().size() == 2 && nullableUnion && config.isHandleNullable()) {
           // For a simple nullable (null | type), interpret the union as a single nullable field.
-          // Requires setting handleNullable in the config, otherwise fall back on the literal interpretation.
+          // Requires setting handleNullable in the config, otherwise fall back on the literal
+          // interpretation.
           int nullIndex = schema.getTypes().get(0).getType() == Schema.Type.NULL ? 0 : 1;
           int childIndex = nullIndex == 0 ? 1 : 0;
           Schema childSchema = schema.getTypes().get(childIndex);
-          Consumer<?> childConsumer = createConsumer(childSchema, name, true, config, consumerVector);
+          Consumer<?> childConsumer =
+              createConsumer(childSchema, name, true, config, consumerVector);
           consumer = new AvroNullableConsumer<>(childConsumer, nullIndex);
-        }
-        else {
+        } else {
           // Literal interpretation of a union, which may or may not include a null element.
           consumer = createUnionConsumer(schema, name, nullableUnion, config, consumerVector);
         }
@@ -222,9 +224,13 @@ public class AvroToArrowUtils {
                   nullable, arrowType, /* dictionary= */ null, getMetaData(schema, extProps));
           vector = createVector(consumerVector, fieldType, name, allocator);
           if (schema.getFixedSize() <= 16) {
-            consumer = new AvroDecimalConsumer.FixedDecimalConsumer((DecimalVector) vector, schema.getFixedSize());
+            consumer =
+                new AvroDecimalConsumer.FixedDecimalConsumer(
+                    (DecimalVector) vector, schema.getFixedSize());
           } else {
-            consumer = new AvroDecimal256Consumer.FixedDecimal256Consumer((Decimal256Vector) vector, schema.getFixedSize());
+            consumer =
+                new AvroDecimal256Consumer.FixedDecimal256Consumer(
+                    (Decimal256Vector) vector, schema.getFixedSize());
           }
         } else {
           arrowType = new ArrowType.FixedSizeBinary(schema.getFixedSize());
@@ -335,7 +341,8 @@ public class AvroToArrowUtils {
           if (decimalType.getPrecision() <= 38) {
             consumer = new AvroDecimalConsumer.BytesDecimalConsumer((DecimalVector) vector);
           } else {
-            consumer = new AvroDecimal256Consumer.BytesDecimal256Consumer((Decimal256Vector) vector);
+            consumer =
+                new AvroDecimal256Consumer.BytesDecimal256Consumer((Decimal256Vector) vector);
           }
         } else {
           arrowType = new ArrowType.Binary();
@@ -473,7 +480,8 @@ public class AvroToArrowUtils {
     return new SkipConsumer(skipFunction);
   }
 
-  static org.apache.arrow.vector.types.pojo.Schema createArrowSchema(Schema schema, AvroToArrowConfig config) {
+  static org.apache.arrow.vector.types.pojo.Schema createArrowSchema(
+      Schema schema, AvroToArrowConfig config) {
 
     // Create an Arrow schema matching the structure of vectors built by createCompositeConsumer()
 
@@ -541,7 +549,11 @@ public class AvroToArrowUtils {
   }
 
   private static Field avroSchemaToField(
-      Schema schema, String name, boolean nullable, AvroToArrowConfig config, Map<String, String> externalProps) {
+      Schema schema,
+      String name,
+      boolean nullable,
+      AvroToArrowConfig config,
+      Map<String, String> externalProps) {
 
     final Schema.Type type = schema.getType();
     final LogicalType logicalType = schema.getLogicalType();
@@ -550,16 +562,18 @@ public class AvroToArrowUtils {
 
     switch (type) {
       case UNION:
-        boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
+        boolean nullableUnion =
+            schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
         if (nullableUnion && schema.getTypes().size() == 2 && config.isHandleNullable()) {
           // For a simple nullable (null | type), interpret the union as a single nullable field.
-          // Requires setting handleNullable in the config, otherwise fall back on the literal interpretation.
-          Schema childSchema = schema.getTypes().get(0).getType() == Schema.Type.NULL
-              ? schema.getTypes().get(1)
-              : schema.getTypes().get(0);
+          // Requires setting handleNullable in the config, otherwise fall back on the literal
+          // interpretation.
+          Schema childSchema =
+              schema.getTypes().get(0).getType() == Schema.Type.NULL
+                  ? schema.getTypes().get(1)
+                  : schema.getTypes().get(0);
           return avroSchemaToField(childSchema, name, true, config, externalProps);
-        }
-        else {
+        } else {
           // Literal interpretation of a union, which may or may not include a null element.
           for (int i = 0; i < schema.getTypes().size(); i++) {
             Schema childSchema = schema.getTypes().get(i);
@@ -585,10 +599,12 @@ public class AvroToArrowUtils {
         FieldType structFieldType =
             new FieldType(false, new ArrowType.Struct(), /* dictionary= */ null);
         Field structField =
-            new Field(MapVector.DATA_VECTOR_NAME, structFieldType, Arrays.asList(keyField, valueField));
+            new Field(
+                MapVector.DATA_VECTOR_NAME, structFieldType, Arrays.asList(keyField, valueField));
         children.add(structField);
         fieldType =
-            createFieldType(nullable, new ArrowType.Map(/* keysSorted= */ false), schema, externalProps);
+            createFieldType(
+                nullable, new ArrowType.Map(/* keysSorted= */ false), schema, externalProps);
         break;
       case RECORD:
         final Set<String> skipFieldNames = config.getSkipFieldNames();
@@ -674,10 +690,12 @@ public class AvroToArrowUtils {
         fieldType = createFieldType(nullable, longArrowType, schema, externalProps);
         break;
       case FLOAT:
-        fieldType = createFieldType(nullable, new ArrowType.FloatingPoint(SINGLE), schema, externalProps);
+        fieldType =
+            createFieldType(nullable, new ArrowType.FloatingPoint(SINGLE), schema, externalProps);
         break;
       case DOUBLE:
-        fieldType = createFieldType(nullable, new ArrowType.FloatingPoint(DOUBLE), schema, externalProps);
+        fieldType =
+            createFieldType(nullable, new ArrowType.FloatingPoint(DOUBLE), schema, externalProps);
         break;
       case BYTES:
         final ArrowType bytesArrowType;
@@ -707,11 +725,16 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createArrayConsumer(
-      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema,
+      String name,
+      boolean nullable,
+      AvroToArrowConfig config,
+      FieldVector consumerVector) {
 
     ListVector listVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, nullable, config, /* externalProps = */ null);
+      final Field field =
+          avroSchemaToField(schema, name, nullable, config, /* externalProps= */ null);
       listVector = (ListVector) field.createVector(config.getAllocator());
     } else {
       listVector = (ListVector) consumerVector;
@@ -727,13 +750,18 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createStructConsumer(
-      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema,
+      String name,
+      boolean nullable,
+      AvroToArrowConfig config,
+      FieldVector consumerVector) {
 
     final Set<String> skipFieldNames = config.getSkipFieldNames();
 
     StructVector structVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
+      final Field field =
+          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
       structVector = (StructVector) field.createVector(config.getAllocator());
     } else {
       structVector = (StructVector) consumerVector;
@@ -764,11 +792,16 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createEnumConsumer(
-      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema,
+      String name,
+      boolean nullable,
+      AvroToArrowConfig config,
+      FieldVector consumerVector) {
 
     BaseIntVector indexVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
+      final Field field =
+          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
       indexVector = (BaseIntVector) field.createVector(config.getAllocator());
     } else {
       indexVector = (BaseIntVector) consumerVector;
@@ -788,11 +821,16 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createMapConsumer(
-      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema,
+      String name,
+      boolean nullable,
+      AvroToArrowConfig config,
+      FieldVector consumerVector) {
 
     MapVector mapVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, nullable, config, /* externalProps = */ null);
+      final Field field =
+          avroSchemaToField(schema, name, nullable, config, /* externalProps= */ null);
       mapVector = (MapVector) field.createVector(config.getAllocator());
     } else {
       mapVector = (MapVector) consumerVector;
@@ -818,7 +856,11 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createUnionConsumer(
-      Schema schema, String name, boolean nullableUnion, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema,
+      String name,
+      boolean nullableUnion,
+      AvroToArrowConfig config,
+      FieldVector consumerVector) {
     final int size = schema.getTypes().size();
 
     UnionVector unionVector;
@@ -837,7 +879,8 @@ public class AvroToArrowUtils {
     for (int i = 0; i < size; i++) {
       FieldVector child = childVectors.get(i);
       Schema subSchema = schema.getTypes().get(i);
-      Consumer delegate = createConsumer(subSchema, subSchema.getName(), nullableUnion, config, child);
+      Consumer delegate =
+          createConsumer(subSchema, subSchema.getName(), nullableUnion, config, child);
       delegates[i] = delegate;
       types[i] = child.getMinorType();
     }
@@ -904,8 +947,8 @@ public class AvroToArrowUtils {
 
   // Do not include props that are part of the Avro format itself as field metadata
   // These are already represented in the field / type structure and are not custom attributes
-  private static final List<String> AVRO_FORMAT_METADATA = Arrays.asList(
-      "logicalType", "precision", "scale");
+  private static final List<String> AVRO_FORMAT_METADATA =
+      Arrays.asList("logicalType", "precision", "scale");
 
   private static Map<String, String> getMetaData(Schema schema) {
     Map<String, String> metadata = new HashMap<>();
@@ -955,8 +998,7 @@ public class AvroToArrowUtils {
       Map<String, String> externalProps,
       DictionaryEncoding dictionary) {
 
-    return createFieldType(
-        /* nullable= */ false, arrowType, schema, externalProps, dictionary);
+    return createFieldType(/* nullable= */ false, arrowType, schema, externalProps, dictionary);
   }
 
   private static FieldType createFieldType(
@@ -966,8 +1008,7 @@ public class AvroToArrowUtils {
       Map<String, String> externalProps,
       DictionaryEncoding dictionary) {
 
-    return new FieldType(
-        nullable, arrowType, dictionary, getMetaData(schema, externalProps));
+    return new FieldType(nullable, arrowType, dictionary, getMetaData(schema, externalProps));
   }
 
   private static String convertAliases(Set<String> aliases) {
