@@ -202,7 +202,7 @@ public class AvroToArrowUtils {
         consumer = createStructConsumer(schema, name, nullable, config, consumerVector);
         break;
       case ENUM:
-        consumer = createEnumConsumer(schema, name, config, consumerVector);
+        consumer = createEnumConsumer(schema, name, nullable, config, consumerVector);
         break;
       case STRING:
         arrowType = new ArrowType.Utf8();
@@ -760,11 +760,11 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createEnumConsumer(
-      Schema schema, String name, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema, String name, boolean nullable, AvroToArrowConfig config, FieldVector consumerVector) {
 
     BaseIntVector indexVector;
     if (consumerVector == null) {
-      final Field field = avroSchemaToField(schema, name, config, createExternalProps(schema));
+      final Field field = avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
       indexVector = (BaseIntVector) field.createVector(config.getAllocator());
     } else {
       indexVector = (BaseIntVector) consumerVector;
