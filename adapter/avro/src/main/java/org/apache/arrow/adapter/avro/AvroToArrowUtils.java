@@ -181,7 +181,9 @@ public class AvroToArrowUtils {
     switch (type) {
       case UNION:
         boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
-        if (config.isHandleNullable() && schema.getTypes().size() == 2 && nullableUnion) {
+        if (schema.getTypes().size() == 2 && nullableUnion && config.isHandleNullable()) {
+          // For a simple nullable (null | type), interpret the union as a single nullable field.
+          // Requires setting handleNullable in the config, otherwise fall back on the literal interpretation.
           int nullIndex = schema.getTypes().get(0).getType() == Schema.Type.NULL ? 0 : 1;
           int childIndex = nullIndex == 0 ? 1 : 0;
           Schema childSchema = schema.getTypes().get(childIndex);
@@ -189,7 +191,8 @@ public class AvroToArrowUtils {
           consumer = new AvroNullableConsumer<>(childConsumer, nullIndex);
         }
         else {
-          consumer = createUnionConsumer(schema, name, config, consumerVector);
+          // Literal interpretation of a union, which may or may not include a null element.
+          consumer = createUnionConsumer(schema, name, nullableUnion, config, consumerVector);
         }
         break;
       case ARRAY:
@@ -548,19 +551,20 @@ public class AvroToArrowUtils {
     switch (type) {
       case UNION:
         boolean nullableUnion = schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
-        // For a simple nullable (null | type), just call avroSchemaToField on the child with nullable = true
-        if (config.isHandleNullable() && schema.getTypes().size() == 2 && nullableUnion) {
+        if (nullableUnion && schema.getTypes().size() == 2 && config.isHandleNullable()) {
+          // For a simple nullable (null | type), interpret the union as a single nullable field.
+          // Requires setting handleNullable in the config, otherwise fall back on the literal interpretation.
           Schema childSchema = schema.getTypes().get(0).getType() == Schema.Type.NULL
               ? schema.getTypes().get(1)
               : schema.getTypes().get(0);
           return avroSchemaToField(childSchema, name, true, config, externalProps);
         }
         else {
-          // TODO: Add null type to union if any children are nullable
+          // Literal interpretation of a union, which may or may not include a null element.
           for (int i = 0; i < schema.getTypes().size(); i++) {
             Schema childSchema = schema.getTypes().get(i);
             // Union child vector should use default name
-            children.add(avroSchemaToField(childSchema, null, config));
+            children.add(avroSchemaToField(childSchema, null, nullableUnion, config, null));
           }
           fieldType =
               createFieldType(new ArrowType.Union(UnionMode.Sparse, null), schema, externalProps);
@@ -814,11 +818,8 @@ public class AvroToArrowUtils {
   }
 
   private static Consumer createUnionConsumer(
-      Schema schema, String name, AvroToArrowConfig config, FieldVector consumerVector) {
+      Schema schema, String name, boolean nullableUnion, AvroToArrowConfig config, FieldVector consumerVector) {
     final int size = schema.getTypes().size();
-
-    final boolean nullable =
-        schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
 
     UnionVector unionVector;
     if (consumerVector == null) {
@@ -836,7 +837,7 @@ public class AvroToArrowUtils {
     for (int i = 0; i < size; i++) {
       FieldVector child = childVectors.get(i);
       Schema subSchema = schema.getTypes().get(i);
-      Consumer delegate = createConsumer(subSchema, subSchema.getName(), nullable, config, child);
+      Consumer delegate = createConsumer(subSchema, subSchema.getName(), nullableUnion, config, child);
       delegates[i] = delegate;
       types[i] = child.getMinorType();
     }
