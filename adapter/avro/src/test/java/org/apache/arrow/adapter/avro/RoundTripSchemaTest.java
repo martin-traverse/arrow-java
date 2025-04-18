@@ -32,40 +32,38 @@ import org.junit.jupiter.api.Test;
 
 public class RoundTripSchemaTest {
 
-  // Schema round trip for primitive types, nullable and non-nullable
+  private void doRoundTripTest(List<Field> fields) {
 
-  @Test
-  public void testRoundTripNullType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
-
-    List<Field> fields =
-        Arrays.asList(new Field("nullType", FieldType.notNullable(new ArrowType.Null()), null));
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
     org.apache.arrow.vector.types.pojo.Schema arrowSchema =
         AvroToArrowUtils.createArrowSchema(avroSchema, config);
 
-    // Exact match on fields after round trip
+    // Compare string representations - equality not defined for logical types
     assertEquals(fields, arrowSchema.getFields());
+  }
+
+  // Schema round trip for primitive types, nullable and non-nullable
+
+  @Test
+  public void testRoundTripNullType() {
+
+    List<Field> fields =
+        Arrays.asList(new Field("nullType", FieldType.notNullable(new ArrowType.Null()), null));
+
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripBooleanType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
             new Field("nullableBool", FieldType.nullable(new ArrowType.Bool()), null),
             new Field("nonNullableBool", FieldType.notNullable(new ArrowType.Bool()), null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Exact match on fields after round trip
-    assertEquals(fields, arrowSchema.getFields());
+    doRoundTripTest(fields);
   }
 
   @Test
@@ -94,8 +92,6 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripFloatingPointTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
-
     // Only round trip types with direct equivalent in Avro
 
     List<Field> fields =
@@ -117,54 +113,33 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Exact match on fields after round trip
-    assertEquals(fields, arrowSchema.getFields());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripStringTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
             new Field("nullableUtf8", FieldType.nullable(new ArrowType.Utf8()), null),
             new Field("nonNullableUtf8", FieldType.notNullable(new ArrowType.Utf8()), null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Exact match on fields after round trip
-    assertEquals(fields, arrowSchema.getFields());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripBinaryTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
             new Field("nullableBinary", FieldType.nullable(new ArrowType.Binary()), null),
             new Field("nonNullableBinary", FieldType.notNullable(new ArrowType.Binary()), null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Exact match on fields after round trip
-    assertEquals(fields, arrowSchema.getFields());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripFixedSizeBinaryTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -177,20 +152,13 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.FixedSizeBinary(10)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Exact match on fields after round trip
-    assertEquals(fields, arrowSchema.getFields());
+    doRoundTripTest(fields);
   }
 
   // Schema round trip for logical types, nullable and non-nullable
 
   @Test
   public void testRoundTripDecimalTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -223,18 +191,11 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Decimal(60, 50, 256)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripDateTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -245,18 +206,11 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Date(DateUnit.DAY)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripTimeTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -277,18 +231,11 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Time(TimeUnit.MICROSECOND, 64)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripZoneAwareTimestampTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -317,18 +264,11 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC")),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripLocalTimestampTypes() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -357,20 +297,13 @@ public class RoundTripSchemaTest {
                 FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.NANOSECOND, null)),
                 null));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   // Schema round trip for complex types, where the contents are primitive and logical types
 
   @Test
   public void testRoundTripListType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -403,18 +336,11 @@ public class RoundTripSchemaTest {
                         FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
                         null))));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripMapType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -471,18 +397,11 @@ public class RoundTripSchemaTest {
                                     new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
                                 null))))));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 
   @Test
   public void testRoundTripStructType() {
-
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -519,11 +438,6 @@ public class RoundTripSchemaTest {
                         FieldType.notNullable(new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC")),
                         null))));
 
-    Schema avroSchema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord");
-    org.apache.arrow.vector.types.pojo.Schema arrowSchema =
-        AvroToArrowUtils.createArrowSchema(avroSchema, config);
-
-    // Compare string representations - equality not defined for logical types
-    assertEquals(fields.toString(), arrowSchema.getFields().toString());
+    doRoundTripTest(fields);
   }
 }
