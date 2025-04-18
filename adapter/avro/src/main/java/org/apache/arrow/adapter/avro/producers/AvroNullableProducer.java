@@ -21,7 +21,7 @@ import org.apache.arrow.vector.FieldVector;
 import org.apache.avro.io.Encoder;
 
 /**
- * Producer wrapper which producers nullable types to an avro encoder. Reed data from the underlying
+ * Producer wrapper which produces nullable types to an avro encoder. Read data from the underlying
  * {@link FieldVector}.
  *
  * @param <T> The vector within producer or its delegate, used for partially produce purpose.
