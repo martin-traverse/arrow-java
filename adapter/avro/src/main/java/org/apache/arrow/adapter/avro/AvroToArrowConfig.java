@@ -82,6 +82,7 @@ public class AvroToArrowConfig {
    * @param targetBatchSize The maximum rowCount to read each time when partially convert data.
    * @param provider The dictionary provider used for enum type, adapter will update this provider.
    * @param skipFieldNames Field names which to skip.
+   * @param legacyMode Keep compatibility with old behavior (pre-2025)
    */
   AvroToArrowConfig(
       BufferAllocator allocator,
