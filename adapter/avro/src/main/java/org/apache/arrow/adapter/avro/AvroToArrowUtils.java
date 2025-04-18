@@ -215,7 +215,7 @@ public class AvroToArrowUtils {
         consumer = new AvroStringConsumer((VarCharVector) vector);
         break;
       case FIXED:
-        Map<String, String> extProps = createExternalProps(schema);
+        Map<String, String> extProps = createExternalProps(schema, config);
         if (logicalType instanceof LogicalTypes.Decimal) {
           arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
           fieldType =
@@ -617,7 +617,7 @@ public class AvroToArrowUtils {
             if (doc != null) {
               extProps.put("doc", doc);
             }
-            if (aliases != null && !aliases.isEmpty()) {
+            if (aliases != null && (!aliases.isEmpty() || config.isLegacyMode())) {
               extProps.put("aliases", convertAliases(aliases));
             }
             children.add(avroSchemaToField(childSchema, fullChildName, config, extProps));
@@ -759,7 +759,7 @@ public class AvroToArrowUtils {
     StructVector structVector;
     if (consumerVector == null) {
       final Field field =
-          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
+          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema, config));
       structVector = (StructVector) field.createVector(config.getAllocator());
     } else {
       structVector = (StructVector) consumerVector;
@@ -799,7 +799,7 @@ public class AvroToArrowUtils {
     BaseIntVector indexVector;
     if (consumerVector == null) {
       final Field field =
-          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema));
+          avroSchemaToField(schema, name, nullable, config, createExternalProps(schema, config));
       indexVector = (BaseIntVector) field.createVector(config.getAllocator());
     } else {
       indexVector = (BaseIntVector) consumerVector;
@@ -967,14 +967,14 @@ public class AvroToArrowUtils {
   }
 
   /** Parse avro attributes and convert them to metadata. */
-  private static Map<String, String> createExternalProps(Schema schema) {
+  private static Map<String, String> createExternalProps(Schema schema, AvroToArrowConfig config) {
     final Map<String, String> extProps = new HashMap<>();
     String doc = schema.getDoc();
     Set<String> aliases = schema.getAliases();
     if (doc != null) {
       extProps.put("doc", doc);
     }
-    if (aliases != null && !aliases.isEmpty()) {
+    if (aliases != null && (!aliases.isEmpty() || config.isLegacyMode())) {
       extProps.put("aliases", convertAliases(aliases));
     }
     return extProps;
