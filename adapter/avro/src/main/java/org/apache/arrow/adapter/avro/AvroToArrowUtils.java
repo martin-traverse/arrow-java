@@ -274,37 +274,42 @@ public class AvroToArrowUtils {
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimeMicroConsumer((TimeMicroVector) vector);
-        } else if (logicalType instanceof LogicalTypes.TimestampMillis) {
+        } else if (logicalType instanceof LogicalTypes.TimestampMillis && !config.isLegacyMode()) {
+          // In legacy mode the timestamp-xxx types are treated as local, there is no zone aware type
           arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC");
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMillisTzConsumer((TimeStampMilliTZVector) vector);
-        } else if (logicalType instanceof LogicalTypes.TimestampMicros) {
+        } else if (logicalType instanceof LogicalTypes.TimestampMicros && !config.isLegacyMode()) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMicrosTzConsumer((TimeStampMicroTZVector) vector);
-        } else if (logicalType instanceof LogicalTypes.TimestampNanos) {
+        } else if (logicalType instanceof LogicalTypes.TimestampNanos && !config.isLegacyMode()) {
           arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC");
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampNanosTzConsumer((TimeStampNanoTZVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis ||
+            (logicalType instanceof LogicalTypes.TimestampMillis && config.isLegacyMode())) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMillisConsumer((TimeStampMilliVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros ||
+            (logicalType instanceof LogicalTypes.TimestampMicros && config.isLegacyMode())) {
+          // In legacy mode the timestamp-xxx types are treated as local
           arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMicrosConsumer((TimeStampMicroVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos ||
+            (logicalType instanceof LogicalTypes.TimestampNanos && config.isLegacyMode())) {
           arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
           fieldType =
               new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
@@ -671,16 +676,21 @@ public class AvroToArrowUtils {
         if (logicalType instanceof LogicalTypes.TimeMicros) {
           longArrowType = new ArrowType.Time(TimeUnit.MICROSECOND, 64);
         } else if (logicalType instanceof LogicalTypes.TimestampMillis) {
-          longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC");
+          // In legacy mode the timestamp-xxx types are treated as local
+          String tz = config.isLegacyMode() ? null : "UTC";
+          longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, tz);
         } else if (logicalType instanceof LogicalTypes.TimestampMicros) {
-          longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
+          String tz = config.isLegacyMode() ? null : "UTC";
+          longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, tz);
         } else if (logicalType instanceof LogicalTypes.TimestampNanos) {
-          longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC");
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis) {
+          String tz = config.isLegacyMode() ? null : "UTC";
+          longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, tz);
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis && !config.isLegacyMode()) {
+          // In legacy mode the local-timestamp-xxx types are not recognized (result is just type = long)
           longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros && !config.isLegacyMode()) {
           longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos && !config.isLegacyMode()) {
           longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
         } else {
           longArrowType = new ArrowType.Int(64, /* isSigned= */ true);
