@@ -715,7 +715,7 @@ public class AvroToArrowUtils {
     if (name == null) {
       name = getDefaultFieldName(fieldType.getType());
     }
-    if (name.contains(".")) {
+    if (name.contains(".") && !config.isLegacyMode()) {
       // Do not include namespace as part of the field name
       name = name.substring(name.lastIndexOf(".") + 1);
     }
