@@ -182,10 +182,9 @@ public class AvroToArrowUtils {
       case UNION:
         boolean nullableUnion =
             schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
-        if (schema.getTypes().size() == 2 && nullableUnion && config.isHandleNullable()) {
+        if (schema.getTypes().size() == 2 && nullableUnion && !config.isLegacyMode()) {
           // For a simple nullable (null | type), interpret the union as a single nullable field.
-          // Requires setting handleNullable in the config, otherwise fall back on the literal
-          // interpretation.
+          // Not available in legacy mode, which uses the literal interpretation instead
           int nullIndex = schema.getTypes().get(0).getType() == Schema.Type.NULL ? 0 : 1;
           int childIndex = nullIndex == 0 ? 1 : 0;
           Schema childSchema = schema.getTypes().get(childIndex);
@@ -564,10 +563,9 @@ public class AvroToArrowUtils {
       case UNION:
         boolean nullableUnion =
             schema.getTypes().stream().anyMatch(t -> t.getType() == Schema.Type.NULL);
-        if (nullableUnion && schema.getTypes().size() == 2 && config.isHandleNullable()) {
+        if (nullableUnion && schema.getTypes().size() == 2 && !config.isLegacyMode()) {
           // For a simple nullable (null | type), interpret the union as a single nullable field.
-          // Requires setting handleNullable in the config, otherwise fall back on the literal
-          // interpretation.
+          // Not available in legacy mode, which uses the literal interpretation instead
           Schema childSchema =
               schema.getTypes().get(0).getType() == Schema.Type.NULL
                   ? schema.getTypes().get(1)

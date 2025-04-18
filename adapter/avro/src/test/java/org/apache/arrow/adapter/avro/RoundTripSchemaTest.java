@@ -53,7 +53,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripBooleanType() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -71,7 +71,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripIntegerTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     // Only round trip types with direct equivalent in Avro
 
@@ -94,7 +94,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripFloatingPointTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     // Only round trip types with direct equivalent in Avro
 
@@ -128,7 +128,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripStringTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -146,7 +146,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripBinaryTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -164,7 +164,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripFixedSizeBinaryTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -190,7 +190,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripDecimalTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -234,7 +234,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripDateTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -256,7 +256,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripTimeTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -288,7 +288,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripZoneAwareTimestampTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -328,7 +328,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripLocalTimestampTypes() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -370,7 +370,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripListType() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -414,7 +414,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripMapType() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(
@@ -482,7 +482,7 @@ public class RoundTripSchemaTest {
   @Test
   public void testRoundTripStructType() {
 
-    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), true);
+    AvroToArrowConfig config = new AvroToArrowConfig(null, 1, null, Collections.emptySet(), false);
 
     List<Field> fields =
         Arrays.asList(

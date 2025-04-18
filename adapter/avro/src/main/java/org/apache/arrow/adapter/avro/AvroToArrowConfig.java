@@ -41,8 +41,11 @@ public class AvroToArrowConfig {
   /** The field names which to skip when reading decoder values. */
   private final Set<String> skipFieldNames;
 
-  /** Interpret unions where one type is null as a nullable field. */
-  private final boolean handleNullable;
+  /**
+   * Use legacy-mode to keep compatibility with old behavior (pre-2025), enabled by default.
+   * This affects how the AvroToArrow code interprets the Avro schema.
+   */
+  private final boolean legacyMode;
 
   /**
    * Instantiate an instance.
@@ -69,7 +72,7 @@ public class AvroToArrowConfig {
     this.skipFieldNames = skipFieldNames;
 
     // Default values for optional parameters
-    handleNullable = false; // Match original behavior by default
+    legacyMode = true; // Keep compatibility with old behavior by default
   }
 
   /**
@@ -85,7 +88,7 @@ public class AvroToArrowConfig {
       int targetBatchSize,
       DictionaryProvider.MapDictionaryProvider provider,
       Set<String> skipFieldNames,
-      boolean handleNullable) {
+      boolean legacyMode) {
 
     Preconditions.checkArgument(
         targetBatchSize == AvroToArrowVectorIterator.NO_LIMIT_BATCH_SIZE || targetBatchSize > 0,
@@ -96,7 +99,7 @@ public class AvroToArrowConfig {
     this.targetBatchSize = targetBatchSize;
     this.provider = provider;
     this.skipFieldNames = skipFieldNames;
-    this.handleNullable = handleNullable;
+    this.legacyMode = legacyMode;
   }
 
   public BufferAllocator getAllocator() {
@@ -115,7 +118,7 @@ public class AvroToArrowConfig {
     return skipFieldNames;
   }
 
-  public boolean isHandleNullable() {
-    return handleNullable;
+  public boolean isLegacyMode() {
+    return legacyMode;
   }
 }

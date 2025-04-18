@@ -79,7 +79,7 @@ public class RoundTripDataTest {
   @TempDir public static File TMP;
 
   private static AvroToArrowConfig basicConfig(BufferAllocator allocator) {
-    return new AvroToArrowConfig(allocator, 1000, null, Collections.emptySet(), true);
+    return new AvroToArrowConfig(allocator, 1000, null, Collections.emptySet(), false);
   }
 
   private static VectorSchemaRoot readDataFile(
