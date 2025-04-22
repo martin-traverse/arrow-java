@@ -42,8 +42,8 @@ public class AvroToArrowConfig {
   private final Set<String> skipFieldNames;
 
   /**
-   * Use legacy-mode to keep compatibility with old behavior (pre-2025), enabled by default.
-   * This affects how the AvroToArrow code interprets the Avro schema.
+   * Use legacy-mode to keep compatibility with old behavior (pre-2025), enabled by default. This
+   * affects how the AvroToArrow code interprets the Avro schema.
    */
   private final boolean legacyMode;
 

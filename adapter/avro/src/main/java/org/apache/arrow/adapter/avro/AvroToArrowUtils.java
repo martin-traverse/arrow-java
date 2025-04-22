@@ -210,7 +210,8 @@ public class AvroToArrowUtils {
         break;
       case STRING:
         arrowType = new ArrowType.Utf8();
-        fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+        fieldType =
+            new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
         vector = createVector(consumerVector, fieldType, name, allocator);
         consumer = new AvroStringConsumer((VarCharVector) vector);
         break;
@@ -220,7 +221,10 @@ public class AvroToArrowUtils {
           arrowType = createDecimalArrowType((LogicalTypes.Decimal) logicalType, schema);
           fieldType =
               new FieldType(
-                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, extProps, config));
+                  nullable,
+                  arrowType,
+                  /* dictionary= */ null,
+                  getMetaData(schema, extProps, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           if (schema.getFixedSize() <= 16) {
             consumer =
@@ -235,7 +239,10 @@ public class AvroToArrowUtils {
           arrowType = new ArrowType.FixedSizeBinary(schema.getFixedSize());
           fieldType =
               new FieldType(
-                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, extProps, config));
+                  nullable,
+                  arrowType,
+                  /* dictionary= */ null,
+                  getMetaData(schema, extProps, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroFixedConsumer((FixedSizeBinaryVector) vector, schema.getFixedSize());
         }
@@ -244,26 +251,30 @@ public class AvroToArrowUtils {
         if (logicalType instanceof LogicalTypes.Date) {
           arrowType = new ArrowType.Date(DateUnit.DAY);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroDateConsumer((DateDayVector) vector);
         } else if (logicalType instanceof LogicalTypes.TimeMillis) {
           arrowType = new ArrowType.Time(TimeUnit.MILLISECOND, 32);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimeMillisConsumer((TimeMilliVector) vector);
         } else {
           arrowType = new ArrowType.Int(32, /* isSigned= */ true);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroIntConsumer((IntVector) vector);
         }
         break;
       case BOOLEAN:
         arrowType = new ArrowType.Bool();
-        fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+        fieldType =
+            new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
         vector = createVector(consumerVector, fieldType, name, allocator);
         consumer = new AvroBooleanConsumer((BitVector) vector);
         break;
@@ -271,67 +282,78 @@ public class AvroToArrowUtils {
         if (logicalType instanceof LogicalTypes.TimeMicros) {
           arrowType = new ArrowType.Time(TimeUnit.MICROSECOND, 64);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimeMicroConsumer((TimeMicroVector) vector);
         } else if (logicalType instanceof LogicalTypes.TimestampMillis && !config.isLegacyMode()) {
-          // In legacy mode the timestamp-xxx types are treated as local, there is no zone aware type
+          // In legacy mode the timestamp-xxx types are treated as local, there is no zone aware
+          // type
           arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, "UTC");
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMillisTzConsumer((TimeStampMilliTZVector) vector);
         } else if (logicalType instanceof LogicalTypes.TimestampMicros && !config.isLegacyMode()) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC");
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMicrosTzConsumer((TimeStampMicroTZVector) vector);
         } else if (logicalType instanceof LogicalTypes.TimestampNanos && !config.isLegacyMode()) {
           arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, "UTC");
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampNanosTzConsumer((TimeStampNanoTZVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis ||
-            (logicalType instanceof LogicalTypes.TimestampMillis && config.isLegacyMode())) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis
+            || (logicalType instanceof LogicalTypes.TimestampMillis && config.isLegacyMode())) {
           arrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMillisConsumer((TimeStampMilliVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros ||
-            (logicalType instanceof LogicalTypes.TimestampMicros && config.isLegacyMode())) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros
+            || (logicalType instanceof LogicalTypes.TimestampMicros && config.isLegacyMode())) {
           // In legacy mode the timestamp-xxx types are treated as local
           arrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampMicrosConsumer((TimeStampMicroVector) vector);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos ||
-            (logicalType instanceof LogicalTypes.TimestampNanos && config.isLegacyMode())) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos
+            || (logicalType instanceof LogicalTypes.TimestampNanos && config.isLegacyMode())) {
           arrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroTimestampNanosConsumer((TimeStampNanoVector) vector);
         } else {
           arrowType = new ArrowType.Int(64, /* isSigned= */ true);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroLongConsumer((BigIntVector) vector);
         }
         break;
       case FLOAT:
         arrowType = new ArrowType.FloatingPoint(SINGLE);
-        fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+        fieldType =
+            new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
         vector = createVector(consumerVector, fieldType, name, allocator);
         consumer = new AvroFloatConsumer((Float4Vector) vector);
         break;
       case DOUBLE:
         arrowType = new ArrowType.FloatingPoint(DOUBLE);
-        fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+        fieldType =
+            new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
         vector = createVector(consumerVector, fieldType, name, allocator);
         consumer = new AvroDoubleConsumer((Float8Vector) vector);
         break;
@@ -340,7 +362,8 @@ public class AvroToArrowUtils {
           LogicalTypes.Decimal decimalType = (LogicalTypes.Decimal) logicalType;
           arrowType = createDecimalArrowType(decimalType, schema);
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           if (decimalType.getPrecision() <= 38) {
             consumer = new AvroDecimalConsumer.BytesDecimalConsumer((DecimalVector) vector);
@@ -351,14 +374,16 @@ public class AvroToArrowUtils {
         } else {
           arrowType = new ArrowType.Binary();
           fieldType =
-              new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+              new FieldType(
+                  nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
           vector = createVector(consumerVector, fieldType, name, allocator);
           consumer = new AvroBytesConsumer((VarBinaryVector) vector);
         }
         break;
       case NULL:
         arrowType = new ArrowType.Null();
-        fieldType = new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
+        fieldType =
+            new FieldType(nullable, arrowType, /* dictionary= */ null, getMetaData(schema, config));
         vector = new NullVector(name, fieldType); // Respect nullability defined in fieldType
         consumer = new AvroNullConsumer((NullVector) vector);
         break;
@@ -584,7 +609,8 @@ public class AvroToArrowUtils {
             children.add(avroSchemaToField(childSchema, null, nullableUnion, config, null));
           }
           fieldType =
-              createFieldType(new ArrowType.Union(UnionMode.Sparse, null), schema, externalProps, config);
+              createFieldType(
+                  new ArrowType.Union(UnionMode.Sparse, null), schema, externalProps, config);
         }
         break;
       case ARRAY:
@@ -607,7 +633,11 @@ public class AvroToArrowUtils {
         children.add(structField);
         fieldType =
             createFieldType(
-                nullable, new ArrowType.Map(/* keysSorted= */ false), schema, externalProps, config);
+                nullable,
+                new ArrowType.Map(/* keysSorted= */ false),
+                schema,
+                externalProps,
+                config);
         break;
       case RECORD:
         final Set<String> skipFieldNames = config.getSkipFieldNames();
@@ -628,7 +658,8 @@ public class AvroToArrowUtils {
             children.add(avroSchemaToField(childSchema, fullChildName, config, extProps));
           }
         }
-        fieldType = createFieldType(nullable, new ArrowType.Struct(), schema, externalProps, config);
+        fieldType =
+            createFieldType(nullable, new ArrowType.Struct(), schema, externalProps, config);
         break;
       case ENUM:
         DictionaryProvider.MapDictionaryProvider provider = config.getProvider();
@@ -642,7 +673,8 @@ public class AvroToArrowUtils {
                 indexType,
                 schema,
                 externalProps,
-                new DictionaryEncoding(current, /* ordered= */ false, /* indexType= */ indexType), config);
+                new DictionaryEncoding(current, /* ordered= */ false, /* indexType= */ indexType),
+                config);
         break;
 
       case STRING:
@@ -685,12 +717,16 @@ public class AvroToArrowUtils {
         } else if (logicalType instanceof LogicalTypes.TimestampNanos) {
           String tz = config.isLegacyMode() ? null : "UTC";
           longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, tz);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis && !config.isLegacyMode()) {
-          // In legacy mode the local-timestamp-xxx types are not recognized (result is just type = long)
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMillis
+            && !config.isLegacyMode()) {
+          // In legacy mode the local-timestamp-xxx types are not recognized (result is just type =
+          // long)
           longArrowType = new ArrowType.Timestamp(TimeUnit.MILLISECOND, null);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros && !config.isLegacyMode()) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampMicros
+            && !config.isLegacyMode()) {
           longArrowType = new ArrowType.Timestamp(TimeUnit.MICROSECOND, null);
-        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos && !config.isLegacyMode()) {
+        } else if (logicalType instanceof LogicalTypes.LocalTimestampNanos
+            && !config.isLegacyMode()) {
           longArrowType = new ArrowType.Timestamp(TimeUnit.NANOSECOND, null);
         } else {
           longArrowType = new ArrowType.Int(64, /* isSigned= */ true);
@@ -699,11 +735,13 @@ public class AvroToArrowUtils {
         break;
       case FLOAT:
         fieldType =
-            createFieldType(nullable, new ArrowType.FloatingPoint(SINGLE), schema, externalProps, config);
+            createFieldType(
+                nullable, new ArrowType.FloatingPoint(SINGLE), schema, externalProps, config);
         break;
       case DOUBLE:
         fieldType =
-            createFieldType(nullable, new ArrowType.FloatingPoint(DOUBLE), schema, externalProps, config);
+            createFieldType(
+                nullable, new ArrowType.FloatingPoint(DOUBLE), schema, externalProps, config);
         break;
       case BYTES:
         final ArrowType bytesArrowType;
@@ -968,7 +1006,8 @@ public class AvroToArrowUtils {
     return metadata;
   }
 
-  private static Map<String, String> getMetaData(Schema schema, Map<String, String> externalProps, AvroToArrowConfig config) {
+  private static Map<String, String> getMetaData(
+      Schema schema, Map<String, String> externalProps, AvroToArrowConfig config) {
     Map<String, String> metadata = getMetaData(schema, config);
     if (externalProps != null) {
       metadata.putAll(externalProps);
@@ -991,13 +1030,21 @@ public class AvroToArrowUtils {
   }
 
   private static FieldType createFieldType(
-      ArrowType arrowType, Schema schema, Map<String, String> externalProps, AvroToArrowConfig config) {
+      ArrowType arrowType,
+      Schema schema,
+      Map<String, String> externalProps,
+      AvroToArrowConfig config) {
     return createFieldType(arrowType, schema, externalProps, /* dictionary= */ null, config);
   }
 
   private static FieldType createFieldType(
-      boolean nullable, ArrowType arrowType, Schema schema, Map<String, String> externalProps, AvroToArrowConfig config) {
-    return createFieldType(nullable, arrowType, schema, externalProps, /* dictionary= */ null, config);
+      boolean nullable,
+      ArrowType arrowType,
+      Schema schema,
+      Map<String, String> externalProps,
+      AvroToArrowConfig config) {
+    return createFieldType(
+        nullable, arrowType, schema, externalProps, /* dictionary= */ null, config);
   }
 
   private static FieldType createFieldType(
@@ -1007,7 +1054,8 @@ public class AvroToArrowUtils {
       DictionaryEncoding dictionary,
       AvroToArrowConfig config) {
 
-    return createFieldType(/* nullable= */ false, arrowType, schema, externalProps, dictionary, config);
+    return createFieldType(
+        /* nullable= */ false, arrowType, schema, externalProps, dictionary, config);
   }
 
   private static FieldType createFieldType(
@@ -1018,7 +1066,8 @@ public class AvroToArrowUtils {
       DictionaryEncoding dictionary,
       AvroToArrowConfig config) {
 
-    return new FieldType(nullable, arrowType, dictionary, getMetaData(schema, externalProps, config));
+    return new FieldType(
+        nullable, arrowType, dictionary, getMetaData(schema, externalProps, config));
   }
 
   private static String convertAliases(Set<String> aliases) {
