@@ -169,10 +169,10 @@ public class ArrowToAvroUtils {
    * may be nullable. Record types must contain at least one child field and cannot contain multiple
    * fields with the same name
    *
-   * <p>String fields that are dictionary-encoded will be represented as an Avro enum, so long as all
-   * the values meet the restrictions on Avro enums (non-null, valid identifiers). Other data types
-   * that are dictionary encoded, or string fields that do not meet the avro requirements, will be output
-   * as their decoded type.
+   * <p>String fields that are dictionary-encoded will be represented as an Avro enum, so long as
+   * all the values meet the restrictions on Avro enums (non-null, valid identifiers). Other data
+   * types that are dictionary encoded, or string fields that do not meet the avro requirements,
+   * will be output as their decoded type.
    *
    * @param arrowFields The arrow fields used to generate the Avro schema
    * @param typeName Name of the top level Avro record type
