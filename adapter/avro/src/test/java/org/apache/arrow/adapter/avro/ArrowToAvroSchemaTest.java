@@ -20,11 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.VarCharVector;
+import org.apache.arrow.vector.dictionary.Dictionary;
+import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.UnionMode;
 import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.DictionaryEncoding;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.avro.LogicalTypes;
@@ -1388,5 +1394,47 @@ public class ArrowToAvroSchemaTest {
     assertEquals(
         Schema.Type.STRING,
         schema.getField("nullableDenseUnionField").schema().getTypes().get(3).getType());
+  }
+
+  @Test
+  public void testWriteDictEnumEncoded() {
+
+    BufferAllocator allocator = new RootAllocator();
+
+    // Create a dictionary
+    FieldType dictionaryField = new FieldType(false, new ArrowType.Utf8(), null);
+    VarCharVector dictionaryVector =
+        new VarCharVector(new Field("dictionary", dictionaryField, null), allocator);
+
+    dictionaryVector.allocateNew(3);
+    dictionaryVector.set(0, "apple".getBytes());
+    dictionaryVector.set(1, "banana".getBytes());
+    dictionaryVector.set(2, "cherry".getBytes());
+    dictionaryVector.setValueCount(3);
+
+    Dictionary dictionary =
+        new Dictionary(
+            dictionaryVector, new DictionaryEncoding(0L, false, new ArrowType.Int(8, true)));
+    DictionaryProvider dictionaries = new DictionaryProvider.MapDictionaryProvider(dictionary);
+
+    List<Field> fields =
+        Arrays.asList(
+            new Field(
+                "enumField",
+                new FieldType(false, new ArrowType.Int(8, true), dictionary.getEncoding(), null),
+                null));
+
+    Schema schema = ArrowToAvroUtils.createAvroSchema(fields, "TestRecord", null, dictionaries);
+
+    assertEquals(Schema.Type.RECORD, schema.getType());
+    assertEquals(1, schema.getFields().size());
+
+    Schema.Field enumField = schema.getField("enumField");
+
+    assertEquals(Schema.Type.ENUM, enumField.schema().getType());
+    assertEquals(3, enumField.schema().getEnumSymbols().size());
+    assertEquals("apple", enumField.schema().getEnumSymbols().get(0));
+    assertEquals("banana", enumField.schema().getEnumSymbols().get(1));
+    assertEquals("cherry", enumField.schema().getEnumSymbols().get(2));
   }
 }
