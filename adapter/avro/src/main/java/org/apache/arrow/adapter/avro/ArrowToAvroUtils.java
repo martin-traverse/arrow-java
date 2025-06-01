@@ -457,12 +457,20 @@ public class ArrowToAvroUtils {
     Set<String> symbols = new HashSet<>();
 
     for (int i = 0; i < vector.getValueCount(); i++) {
-      if (vector.isNull(i)) return false;
+      if (vector.isNull(i)) {
+        return false;
+      }
       Text text = vector.getObject(i);
-      if (text == null) return false;
+      if (text == null) {
+        return false;
+      }
       String symbol = text.toString();
-      if (!ENUM_REGEX.matcher(symbol).matches()) return false;
-      if (symbols.contains(symbol)) return false;
+      if (!ENUM_REGEX.matcher(symbol).matches()) {
+        return false;
+      }
+      if (symbols.contains(symbol)) {
+        return false;
+      }
       symbols.add(symbol);
     }
 
@@ -477,7 +485,9 @@ public class ArrowToAvroUtils {
     for (int i = 0; i < vector.getValueCount(); i++) {
       Text text = vector.getObject(i);
       // This should never happen if dictionaryIsValidEnum() succeeded
-      if (text == null) throw new IllegalArgumentException("Illegal null value in enum");
+      if (text == null) {
+        throw new IllegalArgumentException("Illegal null value in enum");
+      }
       symbols[i] = text.toString();
     }
 
