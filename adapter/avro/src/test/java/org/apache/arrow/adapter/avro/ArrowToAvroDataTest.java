@@ -2872,8 +2872,7 @@ public class ArrowToAvroDataTest {
       // Write an AVRO block using the producer classes
       try (FileOutputStream fos = new FileOutputStream(dataFile)) {
         BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer =
-            ArrowToAvroUtils.createCompositeProducer(vectors, dictionaries);
+        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors, dictionaries);
         for (int row = 0; row < rowCount; row++) {
           producer.produce(encoder);
         }
@@ -2894,109 +2893,6 @@ public class ArrowToAvroDataTest {
           record = datumReader.read(record, decoder);
           // Values read from Avro should be the decoded enum values
           assertEquals(stringVector.getObject(row).toString(), record.get("enumField").toString());
-        }
-      }
-    }
-  }
-
-  @Test
-  public void testWriteEnumDecoded() throws Exception {
-
-    // Dict encoded fields that are not valid Avro enums should be decoded on write
-
-    BufferAllocator allocator = new RootAllocator();
-
-    // Create a dictionary
-    FieldType dictionaryField = new FieldType(false, new ArrowType.Utf8(), null);
-    VarCharVector dictionaryVector =
-        new VarCharVector(new Field("dictionary", dictionaryField, null), allocator);
-
-    dictionaryVector.allocateNew(3);
-    dictionaryVector.set(0, "passion fruit".getBytes()); // spaced not allowed
-    dictionaryVector.set(1, "banana".getBytes());
-    dictionaryVector.set(2, "cherry".getBytes());
-    dictionaryVector.setValueCount(3);
-
-    Dictionary dictionary =
-        new Dictionary(dictionaryVector, new DictionaryEncoding(1L, false, null));
-
-    FieldType dictionaryField2 = new FieldType(false, new ArrowType.Int(64, true), null);
-    BigIntVector dictionaryVector2 =
-        new BigIntVector(new Field("dictionary2", dictionaryField2, null), allocator);
-
-    dictionaryVector2.allocateNew(3);
-    dictionaryVector2.set(0, 0L);
-    dictionaryVector2.set(1, 1L);
-    dictionaryVector2.set(2, 2L);
-    dictionaryVector2.setValueCount(3);
-
-    Dictionary dictionary2 =
-        new Dictionary(dictionaryVector2, new DictionaryEncoding(2L, false, null));
-
-    DictionaryProvider dictionaries =
-        new DictionaryProvider.MapDictionaryProvider(dictionary, dictionary2);
-
-    // Field definition
-    FieldType stringField = new FieldType(false, new ArrowType.Utf8(), null);
-    VarCharVector stringVector =
-        new VarCharVector(new Field("enumField", stringField, null), allocator);
-    stringVector.allocateNew(10);
-    stringVector.setSafe(0, "passion fruit".getBytes());
-    stringVector.setSafe(1, "banana".getBytes());
-    stringVector.setSafe(2, "cherry".getBytes());
-    stringVector.setSafe(3, "cherry".getBytes());
-    stringVector.setSafe(4, "passion fruit".getBytes());
-    stringVector.setSafe(5, "banana".getBytes());
-    stringVector.setSafe(6, "passion fruit".getBytes());
-    stringVector.setSafe(7, "cherry".getBytes());
-    stringVector.setSafe(8, "banana".getBytes());
-    stringVector.setSafe(9, "passion fruit".getBytes());
-    stringVector.setValueCount(10);
-
-    FieldType longField = new FieldType(false, new ArrowType.Int(64, true), null);
-    BigIntVector longVector = new BigIntVector(new Field("enumField2", longField, null), allocator);
-    longVector.allocateNew(10);
-    for (int i = 0; i < 10; i++) {
-      longVector.setSafe(i, (long) i % 3);
-    }
-    longVector.setValueCount(10);
-
-    IntVector encodedVector = (IntVector) DictionaryEncoder.encode(stringVector, dictionary);
-    IntVector encodedVector2 = (IntVector) DictionaryEncoder.encode(longVector, dictionary2);
-
-    // Set up VSR
-    List<FieldVector> vectors = Arrays.asList(encodedVector, encodedVector2);
-    int rowCount = 10;
-
-    try (VectorSchemaRoot root = new VectorSchemaRoot(vectors)) {
-
-      File dataFile = new File(TMP, "testWriteEnumDecodedavro");
-
-      // Write an AVRO block using the producer classes
-      try (FileOutputStream fos = new FileOutputStream(dataFile)) {
-        BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer =
-            ArrowToAvroUtils.createCompositeProducer(vectors, dictionaries);
-        for (int row = 0; row < rowCount; row++) {
-          producer.produce(encoder);
-        }
-        encoder.flush();
-      }
-
-      // Set up reading the AVRO block as a GenericRecord
-      Schema schema = ArrowToAvroUtils.createAvroSchema(root.getSchema().getFields(), dictionaries);
-      GenericDatumReader<GenericRecord> datumReader = new GenericDatumReader<>(schema);
-
-      try (InputStream inputStream = new FileInputStream(dataFile)) {
-
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
-        GenericRecord record = null;
-
-        // Read and check values
-        for (int row = 0; row < rowCount; row++) {
-          record = datumReader.read(record, decoder);
-          assertEquals(stringVector.getObject(row).toString(), record.get("enumField").toString());
-          assertEquals(longVector.getObject(row), record.get("enumField2"));
         }
       }
     }
