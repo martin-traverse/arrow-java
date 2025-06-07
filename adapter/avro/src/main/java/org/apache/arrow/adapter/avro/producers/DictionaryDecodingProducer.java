@@ -22,8 +22,10 @@ import org.apache.arrow.vector.FieldVector;
 import org.apache.avro.io.Encoder;
 
 /**
- * Producer that produces decoded values from a dictionary-encoded {@link BaseIntVector}, writes data to an
- * Avro encoder.
+ * Producer that produces decoded values from a dictionary-encoded {@link BaseIntVector}, writes
+ * data to an Avro encoder.
+ *
+ * @param <T> Type of the underlying dictionary vector
  */
 public class DictionaryDecodingProducer<T extends FieldVector>
     extends BaseAvroProducer<BaseIntVector> {

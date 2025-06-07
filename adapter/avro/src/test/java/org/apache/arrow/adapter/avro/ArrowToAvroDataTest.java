@@ -2872,7 +2872,8 @@ public class ArrowToAvroDataTest {
       // Write an AVRO block using the producer classes
       try (FileOutputStream fos = new FileOutputStream(dataFile)) {
         BinaryEncoder encoder = new EncoderFactory().directBinaryEncoder(fos, null);
-        CompositeAvroProducer producer = ArrowToAvroUtils.createCompositeProducer(vectors, dictionaries);
+        CompositeAvroProducer producer =
+            ArrowToAvroUtils.createCompositeProducer(vectors, dictionaries);
         for (int row = 0; row < rowCount; row++) {
           producer.produce(encoder);
         }
