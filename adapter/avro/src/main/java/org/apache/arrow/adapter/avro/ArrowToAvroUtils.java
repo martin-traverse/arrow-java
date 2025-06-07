@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 import org.apache.arrow.adapter.avro.producers.AvroBigIntProducer;
 import org.apache.arrow.adapter.avro.producers.AvroBooleanProducer;
 import org.apache.arrow.adapter.avro.producers.AvroBytesProducer;
+import org.apache.arrow.adapter.avro.producers.AvroEnumProducer;
 import org.apache.arrow.adapter.avro.producers.AvroFixedSizeBinaryProducer;
 import org.apache.arrow.adapter.avro.producers.AvroFixedSizeListProducer;
 import org.apache.arrow.adapter.avro.producers.AvroFloat2Producer;
@@ -44,6 +45,7 @@ import org.apache.arrow.adapter.avro.producers.AvroUint4Producer;
 import org.apache.arrow.adapter.avro.producers.AvroUint8Producer;
 import org.apache.arrow.adapter.avro.producers.BaseAvroProducer;
 import org.apache.arrow.adapter.avro.producers.CompositeAvroProducer;
+import org.apache.arrow.adapter.avro.producers.DictionaryDecodingProducer;
 import org.apache.arrow.adapter.avro.producers.Producer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroDateDayProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroDateMilliProducer;
@@ -62,6 +64,7 @@ import org.apache.arrow.adapter.avro.producers.logical.AvroTimestampNanoTzProduc
 import org.apache.arrow.adapter.avro.producers.logical.AvroTimestampSecProducer;
 import org.apache.arrow.adapter.avro.producers.logical.AvroTimestampSecTzProducer;
 import org.apache.arrow.util.Preconditions;
+import org.apache.arrow.vector.BaseIntVector;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.DateDayVector;
@@ -100,7 +103,6 @@ import org.apache.arrow.vector.complex.ListVector;
 import org.apache.arrow.vector.complex.MapVector;
 import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.dictionary.Dictionary;
-import org.apache.arrow.vector.dictionary.DictionaryEncoder;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
@@ -557,9 +559,11 @@ public class ArrowToAvroUtils {
       }
       // If a field is dictionary-encoded but cannot be represented as an Avro enum,
       // then decode it before writing
-      if (!dictionaryIsValidEnum(dictionary)) {
-        FieldVector decodedVector = (FieldVector) DictionaryEncoder.decode(vector, dictionary);
-        return createProducer(decodedVector, nullable, dictionaries);
+      if (dictionaryIsValidEnum(dictionary)) {
+        return new AvroEnumProducer((BaseIntVector) vector);
+      } else {
+        BaseAvroProducer<?> dictProducer = createProducer(dictionary.getVector(), false, null);
+        return new DictionaryDecodingProducer<>((BaseIntVector) vector, dictProducer);
       }
     }
 
