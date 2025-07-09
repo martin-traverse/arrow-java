@@ -21,8 +21,6 @@ import org.apache.arrow.adapter.avro.producers.CompositeAvroProducer;
 import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.compression.CompressionCodec;
-import org.apache.arrow.vector.compression.CompressionUtil;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileConstants;
@@ -44,9 +42,7 @@ class AvroFileWriter {
 
   // Use magic from Avro's own constants
   private static final byte[] AVRO_MAGIC = DataFileConstants.MAGIC;
-
-  private static final String codecName = "zstandard";
-  private static final CompressionUtil.CodecType codecType = CompressionUtil.CodecType.ZSTD;
+  private static final String NO_COMPRESSION = "null";
 
   private final OutputStream stream;
   private final Encoder encoder;
@@ -60,7 +56,6 @@ class AvroFileWriter {
   private final byte[] syncMarker;
 
   private final CompositeAvroProducer recordProducer;
-  private final CompressionCodec compressionCodec;
 
 
   public AvroFileWriter(
@@ -88,8 +83,6 @@ class AvroFileWriter {
       this.recordProducer = ArrowToAvroUtils.createCompositeProducer(
           firstBatch.getFieldVectors(),
           dictionaries);
-
-      this.compressionCodec = CompressionCodec.Factory.INSTANCE.createCodec(codecType);
 
       // Generate a random sync marker
       var random = new Random();
@@ -119,7 +112,7 @@ class AvroFileWriter {
     // Prepare the metadata map
     Map<String, byte[]> metadata = new HashMap<>();
     metadata.put("avro.schema", avroSchema.toString().getBytes(StandardCharsets.UTF_8));
-    metadata.put("avro.codec", codecName.getBytes(StandardCharsets.UTF_8));
+    metadata.put("avro.codec", NO_COMPRESSION.getBytes(StandardCharsets.UTF_8));
 
     // Avro magic
     encoder.writeFixed(AVRO_MAGIC);
@@ -162,7 +155,7 @@ class AvroFileWriter {
     ArrowBuf rawBuffer = batchBuffer.getBuffer();
 
     // Compressed buffer is newly allocated and needs to be released
-    try (ArrowBuf compressedBuffer = compressionCodec.compress(allocator, rawBuffer)) {
+    try (ArrowBuf compressedBuffer = compressBuffer(rawBuffer)) {
 
       // Write Avro block to the main encoder
       encoder.writeLong(batch.getRowCount());
@@ -188,5 +181,13 @@ class AvroFileWriter {
     encoder.flush();
     stream.close();
     batchBuffer.close();
+  }
+
+  // Create a new buffer with the compressed data
+  // If compression is null, ref count is increased on the original buffer
+  private ArrowBuf compressBuffer(ArrowBuf buffer) {
+    // Compression not available yet
+    buffer.getReferenceManager().retain();
+    return buffer;
   }
 }

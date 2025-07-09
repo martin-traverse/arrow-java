@@ -23,14 +23,11 @@ import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.compression.CompressionCodec;
-import org.apache.arrow.vector.compression.CompressionUtil;
 import org.apache.arrow.vector.dictionary.Dictionary;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.avro.file.DataFileConstants;
 import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 
 import java.io.IOException;
@@ -49,9 +46,7 @@ class AvroFileReader implements DictionaryProvider {
 
   // Use magic from Avro's own constants
   private static final byte[] AVRO_MAGIC = DataFileConstants.MAGIC;
-
-  private static final String codecName = "zstandard";
-  private static final CompressionUtil.CodecType codecType = CompressionUtil.CodecType.ZSTD;
+  private static final String NO_COMPRESSION = "null";
 
   private final InputStream stream;
   private final BinaryDecoder decoder;
@@ -60,7 +55,6 @@ class AvroFileReader implements DictionaryProvider {
   private final ArrowBuf batchBuffer;
   private BinaryDecoder batchDecoder;
 
-  private final CompressionCodec compressionCodec;
   private CompositeAvroConsumer recordConsumer;
 
   private org.apache.avro.Schema avroSchema;
@@ -77,8 +71,6 @@ class AvroFileReader implements DictionaryProvider {
     this.decoder = DecoderFactory.get().directBinaryDecoder(stream, null);
 
     this.allocator = allocator;
-
-    this.compressionCodec = CompressionCodec.Factory.INSTANCE.createCodec(codecType);
   }
 
   // Sets up a defaulr binary deocder for the channel
@@ -146,7 +138,7 @@ class AvroFileReader implements DictionaryProvider {
     ArrowBuf encodedData = null;
 
     // Decompressed buffer is newly allocated and needs to be released
-    try (ArrowBuf rawData = compressionCodec.decompress(allocator, encodedData)) {
+    try (ArrowBuf rawData = decompressBuffer(encodedData)) {
 
       // Set up stream and decoder to read from the decompressed buffer
       InputStream batchStream = new BufferInputStream(rawData);
@@ -193,6 +185,14 @@ class AvroFileReader implements DictionaryProvider {
     batchBuffer.close();
     batch.close();
     // TODO: Close dictionaries
+  }
+
+  // Create a new buffer with the decompressed data
+  // If compression is null, ref count is increased on the original buffer
+  private ArrowBuf decompressBuffer(ArrowBuf buffer) {
+    // Compression not available yet
+    buffer.getReferenceManager().retain();
+    return buffer;
   }
 
 }
