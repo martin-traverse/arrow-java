@@ -24,15 +24,19 @@ import java.util.List;
 import java.util.Set;
 import org.apache.arrow.adapter.avro.consumers.CompositeAvroConsumer;
 import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.util.Preconditions;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.dictionary.Dictionary;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.InvalidAvroMagicException;
 import org.apache.avro.file.DataFileConstants;
 import org.apache.avro.io.BinaryData;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
+
 
 class AvroFileReader implements DictionaryProvider {
 
@@ -48,7 +52,7 @@ class AvroFileReader implements DictionaryProvider {
   private final InputStream stream;
   private final BinaryDecoder decoder;
   private final BufferAllocator allocator;
-  private final boolean blocking;
+  private final boolean lookAhead;
 
   private org.apache.avro.Schema avroSchema;
   private String avroCodec;
@@ -59,6 +63,8 @@ class AvroFileReader implements DictionaryProvider {
   private Schema arrowSchema;
   private DictionaryProvider.MapDictionaryProvider dictionaries;
 
+  private boolean readHeaderDone;
+  private long headerSize;
   private long nextBatchPosition;
   private ByteBuffer batchBuffer;
   private BinaryDecoder batchDecoder;
@@ -66,20 +72,23 @@ class AvroFileReader implements DictionaryProvider {
 
   // Create a new AvroFileReader for the input stream
   // In order to support non-blocking mode, the stream must support mark / reset
-  public AvroFileReader(InputStream stream, BufferAllocator allocator, boolean blocking) {
+  public AvroFileReader(InputStream stream, BufferAllocator allocator, boolean lookAhead) {
+
+    Preconditions.checkNotNull(stream, "Input stream cannot be null");
+    Preconditions.checkNotNull(allocator, "Buffer allocator cannot be null");
+
+    if (lookAhead) {
+      Preconditions.checkArgument(stream.markSupported(), "Input stream does not support lookAhead (requires markSupporter() == true)");
+    }
 
     this.stream = stream;
     this.allocator = allocator;
-    this.blocking = blocking;
+    this.lookAhead = lookAhead;
 
-    if (blocking) {
-      this.decoder = DecoderFactory.get().binaryDecoder(stream, null);
-    } else {
-      if (!stream.markSupported()) {
-        throw new IllegalArgumentException(
-            "Input stream must support mark/reset for non-blocking mode");
-      }
+    if (lookAhead) {
       this.decoder = DecoderFactory.get().directBinaryDecoder(stream, null);
+    } else {
+      this.decoder = DecoderFactory.get().binaryDecoder(stream, null);
     }
 
     this.syncMarker = new byte[SYNC_MARKER_SIZE];
@@ -87,11 +96,9 @@ class AvroFileReader implements DictionaryProvider {
   }
 
   // Read the Avro header and set up schema / VSR / dictionaries
-  void readHeader() throws IOException {
+  public void readHeader() throws IOException {
 
-    if (avroSchema != null) {
-      throw new IllegalStateException("Avro header has already been read");
-    }
+    Preconditions.checkState(!readHeaderDone, "readHeader() has already been called");
 
     // Keep track of the header size
     long headerSize = 0;
@@ -106,7 +113,7 @@ class AvroFileReader implements DictionaryProvider {
         BinaryData.compareBytes(AVRO_MAGIC, 0, AVRO_MAGIC.length, magic, 0, AVRO_MAGIC.length);
 
     if (validateMagic != 0) {
-      throw new RuntimeException("Invalid AVRO data file: The file is not an Avro file");
+      throw new InvalidAvroMagicException("Invalid AVRO data file: The file is not an Avro file");
     }
 
     // Read the metadata map
@@ -129,6 +136,8 @@ class AvroFileReader implements DictionaryProvider {
           avroSchema = processSchema(valueBuffer);
         } else if ("avro.codec".equals(key)) {
           avroCodec = processCodec(valueBuffer);
+          // Check codec is available before continuing
+          AvroCompression.getAvroCodec(avroCodec);
         }
       }
     }
@@ -164,6 +173,8 @@ class AvroFileReader implements DictionaryProvider {
     this.arrowSchema = arrowBatch.getSchema();
 
     // First batch starts after the header
+    this.readHeaderDone = true;
+    this.headerSize = headerSize;
     this.nextBatchPosition = headerSize;
   }
 
@@ -186,48 +197,37 @@ class AvroFileReader implements DictionaryProvider {
   }
 
   // Schema and VSR available after readHeader()
-  Schema getSchema() {
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+  public Schema getSchema() {
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
     return arrowSchema;
   }
 
-  VectorSchemaRoot getVectorSchemaRoot() {
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+  public VectorSchemaRoot getVectorSchemaRoot() {
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
     return arrowBatch;
   }
 
   @Override
   public Set<Long> getDictionaryIds() {
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
     return dictionaries.getDictionaryIds();
   }
 
   @Override
   public Dictionary lookup(long id) {
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
     return dictionaries.lookup(id);
   }
 
   // Read the next Avro block and load it into the VSR
   // Return true if successful, false if EOS
   // Also false in non-blocking mode if need more data
-  boolean readBatch() throws IOException {
+  public boolean readBatch() throws IOException {
 
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
 
-    if (!hasNextBatch()) {
+    if (!hasNextBatch())
       return false;
-    }
 
     // Read Avro block from the main encoder
     long nRows = decoder.readLong();
@@ -246,7 +246,7 @@ class AvroFileReader implements DictionaryProvider {
             syncMarker, 0, SYNC_MARKER_SIZE, batchSyncMarker, 0, SYNC_MARKER_SIZE);
 
     if (validateMarker != 0) {
-      throw new RuntimeException("Invalid AVRO data file: The file is corrupted");
+      throw new AvroRuntimeException("Invalid AVRO data file: The file is corrupted");
     }
 
     // Reset producers
@@ -279,66 +279,192 @@ class AvroFileReader implements DictionaryProvider {
     }
   }
 
-  private void ensureCapacity(FieldVector vector, int capacity) {
-    if (vector.getValueCapacity() < capacity) {
-      vector.setInitialCapacity(capacity);
+  public boolean skipBatch() throws IOException {
+
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
+
+    if (!hasNextBatch())
+      return false;
+
+    // Read Avro block from the main encoder
+    long nRows = decoder.readLong();
+    long nBytes = decoder.readLong();
+
+    int chunk;
+    for(long remaining = nBytes; remaining > 0; remaining -= chunk) {
+      chunk = (int) Math.min(remaining, Integer.MAX_VALUE);
+      decoder.skipFixed(chunk);
     }
+
+    decoder.skipFixed(SYNC_MARKER_SIZE);
+
+    // Validate sync marker - mismatch indicates a corrupt file
+    int validateMarker =
+        BinaryData.compareBytes(
+            syncMarker, 0, SYNC_MARKER_SIZE, batchSyncMarker, 0, SYNC_MARKER_SIZE);
+
+    if (validateMarker != 0) {
+      throw new AvroRuntimeException("Invalid AVRO data file: The file is corrupted");
+    }
+
+    long batchSize =
+        zigzagSize(nRows)
+            + zigzagSize(batchBuffer.remaining())
+            + batchBuffer.remaining()
+            + SYNC_MARKER_SIZE;
+
+    nextBatchPosition += batchSize;
+    return true;
   }
 
   // Check for position and size of the next Avro data block
   // Provides a mechanism for non-blocking / reactive styles
-  boolean hasNextBatch() throws IOException {
+  public boolean hasNextBatch() throws IOException {
 
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
 
-    if (blocking) {
+    if (lookAhead) {
+      return decoder.inputStream().available() > 0;
+    } else {
       return !decoder.isEnd();
-    }
-
-    var in = decoder.inputStream();
-    in.mark(1);
-
-    try {
-
-      int nextByte = in.read();
-      in.reset();
-
-      return nextByte >= 0;
-    } catch (EOFException e) {
-      return false;
     }
   }
 
-  long nextBatchPosition() {
+  public long headerSize() throws IOException {
 
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
+    Preconditions.checkState(readHeaderDone || lookAhead, "readHeader() has not been called and look-ahead is not enabled");
+
+    // Do not run header size logic if header has already been read
+    if (readHeaderDone) {
+      return headerSize;
     }
 
+    InputStream in = decoder.inputStream();
+    long headerSize = AVRO_MAGIC.length + zigzagSize(0) + SYNC_MARKER_SIZE;
+
+    if (in.available() < headerSize) {
+      return headerSize - in.available();
+    }
+
+    try {
+
+      int bytesRead = 0;
+      int mark = headerSizeMark(headerSize, bytesRead, 0);
+
+      byte[] magic = new byte[AVRO_MAGIC.length];
+      decoder.readFixed(magic);
+      bytesRead += AVRO_MAGIC.length;
+
+      // Validate Avro magic
+      // A wrong file type will cause unexpected errors, even though the header is not fully parsed
+      int validateMagic =
+          BinaryData.compareBytes(AVRO_MAGIC, 0, AVRO_MAGIC.length, magic, 0, AVRO_MAGIC.length);
+
+      if (validateMagic != 0) {
+        throw new InvalidAvroMagicException("Invalid AVRO data file: The file is not an Avro file");
+      }
+
+      for (long count = decoder.readMapStart(); count != 0; count = decoder.mapNext()) {
+
+        headerSize += zigzagSize(count);
+        bytesRead += zigzagSize(count);
+
+        for (long i = 0; i < count; i++) {
+
+          int keySize = decoder.readInt();
+          bytesRead += zigzagSize(keySize);
+
+          if (in.available() < keySize + SYNC_MARKER_SIZE) {
+            return keySize + SYNC_MARKER_SIZE - in.available();
+          }
+
+          mark = headerSizeMark(headerSize, bytesRead, mark);
+          decoder.skipFixed(keySize);
+          bytesRead += keySize;
+
+          int valueSize = decoder.readInt();
+          bytesRead += zigzagSize(valueSize);
+
+          if (in.available() < valueSize + SYNC_MARKER_SIZE) {
+            return valueSize + SYNC_MARKER_SIZE - in.available();
+          }
+
+          mark = headerSizeMark(headerSize, bytesRead, mark);
+          decoder.skipFixed(valueSize);
+          bytesRead += valueSize;
+
+          headerSize +=
+              zigzagSize(keySize) + keySize +
+              zigzagSize(valueSize) + valueSize;
+
+          mark = headerSizeMark(headerSize, bytesRead, mark);
+        }
+      }
+
+      return headerSize;
+    }
+    finally {
+      in.reset();
+    }
+  }
+
+  private int headerSizeMark(long headerSize, int bytesRead, int mark) throws IOException {
+    if (headerSize > mark) {
+      int newMark = Math.max((int) headerSize, mark * 2);
+      InputStream in = decoder.inputStream();
+      in.reset();
+      in.mark(newMark);
+      if (bytesRead > 0) {
+        decoder.skipFixed(bytesRead);
+      }
+      return newMark;
+    } else {
+      return mark;
+    }
+  }
+
+  public long nextBatchPosition() {
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
     return nextBatchPosition;
   }
 
   public long nextBatchSize() throws IOException {
 
-    if (avroSchema == null) {
-      throw new IllegalStateException("Avro header has not been read yet");
-    }
-
-    if (blocking) {
-      throw new IllegalStateException("Next batch size is only available in non-blocking mode");
-    }
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
+    Preconditions.checkState(lookAhead, "nextBatchSize() is not available because look-ahead is not enabled");
 
     InputStream in = decoder.inputStream();
-    in.mark(20);
+    int bytesRequired = 20;
 
+    if (in.available() < bytesRequired) {
+      return bytesRequired -  in.available();
+    }
+
+    in.mark(bytesRequired);
     long nRows = decoder.readLong();
     long nBytes = decoder.readLong();
-
     in.reset();
 
     return zigzagSize(nRows) + zigzagSize(nBytes) + nBytes + SYNC_MARKER_SIZE;
+  }
+
+  public long nextBatchRowCount() throws IOException {
+
+    Preconditions.checkState(readHeaderDone, "readHeader() has not been called");
+    Preconditions.checkState(lookAhead, "nextBatchSize() is not available because look-ahead is not enabled");
+
+    InputStream in = decoder.inputStream();
+    int bytesRequired = 10;
+
+    if (in.available() < bytesRequired) {
+      return bytesRequired - in.available();
+    }
+
+    in.mark(bytesRequired);
+    long nRows = decoder.readLong();
+    in.reset();
+
+    return nRows;
   }
 
   private int zigzagSize(long n) {
@@ -354,9 +480,15 @@ class AvroFileReader implements DictionaryProvider {
     return bytes;
   }
 
+  private void ensureCapacity(FieldVector vector, int capacity) {
+    if (vector.getValueCapacity() < capacity) {
+      vector.setInitialCapacity(capacity);
+    }
+  }
+
   // Closes encoder and / or channel
   // Also closes VSR and dictionary vectors
-  void close() throws IOException {
+  public void close() throws IOException {
 
     stream.close();
 

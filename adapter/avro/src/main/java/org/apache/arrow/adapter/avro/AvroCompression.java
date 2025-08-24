@@ -17,11 +17,13 @@
 package org.apache.arrow.adapter.avro;
 
 import java.nio.ByteBuffer;
+
+import org.apache.avro.UnknownAvroCodecException;
 import org.apache.avro.file.*;
 
-public class AvroCompression {
+class AvroCompression {
 
-  public static Codec getAvroCodec(String codecName) {
+  static Codec getAvroCodec(String codecName) throws UnknownAvroCodecException {
 
     if (codecName == null || DataFileConstants.NULL_CODEC.equals(codecName)) {
       return new NullCodec();
@@ -38,7 +40,7 @@ public class AvroCompression {
         return new ZstandardCodec(CodecFactory.DEFAULT_ZSTANDARD_LEVEL, false, false);
     }
 
-    throw new IllegalArgumentException("Unsupported codec: " + codecName);
+    throw new UnknownAvroCodecException("Unsupported codec: " + codecName);
   }
 
   private static class NullCodec extends Codec {

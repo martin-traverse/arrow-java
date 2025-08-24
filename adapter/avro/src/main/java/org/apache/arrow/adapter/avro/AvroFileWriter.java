@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import org.apache.arrow.adapter.avro.producers.CompositeAvroProducer;
+import org.apache.arrow.util.Preconditions;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.dictionary.DictionaryProvider;
 import org.apache.avro.Schema;
@@ -66,6 +67,9 @@ class AvroFileWriter {
       DictionaryProvider dictionaries,
       String codecName)
       throws IOException {
+
+    Preconditions.checkNotNull(stream, "Output stream cannot be null");
+    Preconditions.checkNotNull(firstBatch, "First batch cannot be null");
 
     EncoderFactory encoderFactory = EncoderFactory.get();
 
